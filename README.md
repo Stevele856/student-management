@@ -20,3 +20,4 @@ func (s *StudentService) GetAcademicRank(gpa float64) string
 func (s *StudentService) SearchByName(name string) ([]*models.Student, error)
 func (s *StudentService) GetStudentsByClass(class string) ([]*models.Student, error)
 func (s *StudentService) IsStudentInClass(studentID, class string) (bool, error)
+
