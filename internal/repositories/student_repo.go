@@ -15,7 +15,7 @@ type StudentRepository interface {
 
 	// CRUD Grades
 	AddGrade(studentID string, grade *models.Grade) error
-	UpdateGrade(studentID string, grade *models.Student) error
+	UpdateGrade(studentID string, grade *models.Grade) error
 	DeleteGrade(studentID, subject string) error
 	GetGradeByStudentID(studentID string) ([]*models.Grade, error)
 	GetGradeBySubject(studentID, subject string) (*models.Grade, error)
