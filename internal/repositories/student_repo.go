@@ -1,4 +1,4 @@
-// Step 2: Định nghĩa interface, làm ngay sau model vì mọi thứ phụ thuộc vào nó.
+// Step 2: interface
 
 package repositories
 
@@ -13,7 +13,7 @@ type StudentRepository interface {
 	GetAllStudents() ([]*models.Student, error)
 	GetStudentByID(id string) (*models.Student, error)
 
-	// CRUD Grades
+	// CRUD grades
 	AddGrade(studentID string, grade *models.Grade) error
 	UpdateGrade(studentID string, grade *models.Grade) error
 	DeleteGrade(studentID, subject string) error

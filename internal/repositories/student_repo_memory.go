@@ -1,21 +1,24 @@
-// Step 3:  Implement toàn bộ các method trong interface StudentRepository bằng in-memory (dùng map), cộng thêm phần đọc/ghi JSON.
+// Step 3:  implement interface
 package repositories
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/student-management/internal/models"
 )
 
-type StudentMemoryRepo struct {
+type InMemoStudentRepo struct {
 	students map[string]*models.Student
-	filePath string 					// Read/write JSON - Read file when initialized - Write file after Add/update/delete
+
+	// Read/write JSON - Read file when initialized - Write file after Add/update/delete
+	filePath string						
 }
 
 // Load JSON
-func (r *StudentMemoryRepo) loadFile() error {
-	// Check file if it existed
+func (r *InMemoStudentRepo) loadFile() error {
+
 	file, err := os.ReadFile(r.filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -25,41 +28,38 @@ func (r *StudentMemoryRepo) loadFile() error {
 		return err
 	}
 
-	// Initialized empty map to receive JSON data
-	var students map[string]*models.Student
-	if err := json.Unmarshal(file, &students); err != nil {
+	var data []*models.Student
+	if err := json.Unmarshal(file, &data); err != nil {
 		return err
 	}
 
 	r.students = make(map[string]*models.Student)
-	for _, value := range students {
+	for _, value := range data {
 		r.students[value.ID] = value
 	}
 
 	return nil
-
 }
 
-// Save JSON 
-func (r *StudentMemoryRepo) saveFile() error {
-	// Re-conver from map to slice 
-	var students []*models.Student
+// Save JSON
+func (r *InMemoStudentRepo) saveFile() error {
 
-	for _, value := range r.students{
-		students = append(students, value)
+	var data []*models.Student
+	for _, value := range r.students {
+		data = append(data, value)
 	}
 
-	data, err := json.MarshalIndent(students, "", "  ")
-
+	students, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(r.filePath, data, 0644)
+	return os.WriteFile(r.filePath, students, 0644)
 }
-// Initilize empty StudentMemoryRepo
-func NewStudentMemoryRepo(filePath string) (*StudentMemoryRepo, error) {
-	repo := &StudentMemoryRepo{
+
+// Initilize an empty constructor
+func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
+	repo := &InMemoStudentRepo{
 		students: make(map[string]*models.Student),
 		filePath: filePath,
 	}
@@ -69,4 +69,18 @@ func NewStudentMemoryRepo(filePath string) (*StudentMemoryRepo, error) {
 		return nil, err
 	}
 	return repo, nil
+}
+
+// CRUD Student
+func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
+	if student == nil || student.ID == ""{
+		return fmt.Errorf("invalid student: ID is required")
+	}
+
+	if _, existed := r.students[student.ID]; existed {
+		return fmt.Errorf("student with ID %s existed", student.ID)
+	}
+
+	r.students[student.ID] = student
+	return r.saveFile()
 }
