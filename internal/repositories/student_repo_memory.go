@@ -13,8 +13,9 @@ type StudentMemoryRepo struct {
 	filePath string 					// Read/write JSON - Read file when initialized - Write file after Add/update/delete
 }
 
-// Load/Save JSON
+// Load JSON
 func (r *StudentMemoryRepo) loadFile() error {
+	// Check file if it existed
 	file, err := os.ReadFile(r.filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -24,20 +25,38 @@ func (r *StudentMemoryRepo) loadFile() error {
 		return err
 	}
 
-	var students []*models.Student
+	// Initialized empty map to receive JSON data
+	var students map[string]*models.Student
 	if err := json.Unmarshal(file, &students); err != nil {
 		return err
 	}
 
 	r.students = make(map[string]*models.Student)
-	for _, s := range students {
-		r.students[s.ID] = s
+	for _, value := range students {
+		r.students[value.ID] = value
 	}
 
 	return nil
 
 }
 
+// Save JSON 
+func (r *StudentMemoryRepo) saveFile() error {
+	// Re-conver from map to slice 
+	var students []*models.Student
+
+	for _, value := range r.students{
+		students = append(students, value)
+	}
+
+	data, err := json.MarshalIndent(students, "", "  ")
+
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(r.filePath, data, 0644)
+}
 // Initilize empty StudentMemoryRepo
 func NewStudentMemoryRepo(filePath string) (*StudentMemoryRepo, error) {
 	repo := &StudentMemoryRepo{
