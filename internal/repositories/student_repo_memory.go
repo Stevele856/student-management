@@ -11,9 +11,7 @@ import (
 
 type InMemoStudentRepo struct {
 	students map[string]*models.Student
-
-	// Read/write JSON - Read file when initialized - Write file after Add/update/delete
-	filePath string						
+	filePath string 				// Read/write JSON - Read file when initialized - Write file after Add/update/delete		
 }
 
 // Load JSON
@@ -73,9 +71,6 @@ func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 
 // CRUD Student
 func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
-	if student == nil || student.ID == ""{
-		return fmt.Errorf("invalid student: ID is required")
-	}
 
 	if _, existed := r.students[student.ID]; existed {
 		return fmt.Errorf("student with ID %s existed", student.ID)
