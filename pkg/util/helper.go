@@ -20,8 +20,9 @@ func IsValidStudentEmail(email string) bool {
 	return err == nil
 }
 
-var studentName = regexp.MustCompile(`^[\p{L}]+(?:[\s'-][\p{L}]+)*$`)
 
+
+var studentName = regexp.MustCompile(`^[\p{L}]+(?:[\s'-][\p{L}]+)*$`)
 func IsValidStudentName(name string) bool {
 	name = strings.TrimSpace(name)
 
@@ -32,13 +33,16 @@ func IsValidStudentName(name string) bool {
 	return studentName.MatchString(name)
 }
 
-var studentClass = regexp.MustCompile(`^\d{1,2}-?[A-Z]$`)
 
+
+var studentClass = regexp.MustCompile(`^\d{1,2}-?[A-Z]$`)
 func IsValidClass(class string) bool {
 	class = strings.TrimSpace(class)
 
 	return studentClass.MatchString(class)
 }
+
+
 
 func IsValidScores(scores []*models.SubjectScore) bool {
 	// MAXIMUM 10 SUBJECTS
@@ -47,9 +51,25 @@ func IsValidScores(scores []*models.SubjectScore) bool {
 	}
 
 	for _, s := range scores {
-		if s.Score < 0 || s.Score > 10 {
+		if !IsValidSubjectScore(s.Score){
 			return false
 		}
 	}
 	return true
+}
+
+
+
+func IsValidSubjectScore(score float64) bool {
+	return score >= 0 && score <= 10
+}
+
+
+
+var studentSubject = regexp.MustCompile(`^[\p{L}\s]{3,30}$`)
+func IsValidSubject(subject string) bool {
+	subject = strings.TrimSpace(subject)
+
+	return studentSubject.MatchString(subject)
+
 }

@@ -8,7 +8,7 @@ type Gender string
 
 const (
 	GenderMale  Gender = "male"
-	GenderFemal Gender = "female"
+	GenderFemale Gender = "female"
 )
 
 type SubjectScore struct {
@@ -24,5 +24,5 @@ type Student struct {
 	Address     string          `json:"address"`
 	Class       string          `json:"class"`
 	Email       string          `json:"email"`
-	Scores      []*SubjectScore `json:"grades"`
+	Scores      []*SubjectScore `json:"scores"`
 }
