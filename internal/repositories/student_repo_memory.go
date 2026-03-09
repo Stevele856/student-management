@@ -79,3 +79,13 @@ func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 	r.students[student.ID] = student
 	return r.saveFile()
 }
+
+// CRUD update student
+func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
+	if _, existed := r.students[student.ID]; !existed {
+		return fmt.Errorf("student with ID %s not existed", student.ID)
+	}
+
+	r.students[student.ID] = student
+	return r.saveFile()
+}

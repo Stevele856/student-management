@@ -94,11 +94,6 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 	return s.repo.AddStudent(student)
 }
 
-/* Update student 
-- Full Update - PUT
-- Partial Update - PATCH
-*/
-
 func (s *StudentService) AddSubjectScore(studentID string, score *models.SubjectScore) error {
 	student, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
@@ -136,3 +131,31 @@ func (s *StudentService) AddSubjectScore(studentID string, score *models.Subject
 student == nil => student not found
 student != nil =>  student found
 */
+
+/* Update student
+- Full Update - PUT
+*/
+
+func (s *StudentService) UpdateStudent(student *models.Student) error {
+	if !util.IsValidStudentName(student.FullName) {
+		return ErrNameFormat
+	}
+
+	if !util.IsValidStudentEmail(student.Email) {
+		return ErrEmailFormat
+	}
+
+	if student.DateOfBirth.After(time.Now()) {
+		return ErrValidDOB
+	}
+
+	if !util.IsValidClass(student.Class) {
+		return ErrClassFormat
+	}
+
+	if !util.IsValidScores(student.Scores) {
+		return ErrScore
+	}
+	
+	return s.repo.UpdateStudent(student)
+}
