@@ -9,9 +9,9 @@ type StudentRepository interface {
 	// CRUD student
 	AddStudent(student *models.Student) error
 	UpdateStudent(student *models.Student) error
-	DeleteStudent(id string) error
+	DeleteStudent(studentID string) error
 	GetAllStudents() ([]*models.Student, error)
-	GetStudentByID(id string) (*models.Student, error)
+	GetStudentByID(studentID string) (*models.Student, error)
 	GetStudentByEmail(email string) (*models.Student, error)
 
 	// CRUD scores

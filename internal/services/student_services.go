@@ -16,12 +16,12 @@ type StudentService struct {
 	repo repositories.StudentRepository
 }
 
-// Constructor
+// CONSTRUCTOR
 func NewStudentService(repo repositories.StudentRepository) *StudentService {
 	return &StudentService{repo: repo}
 }
 
-// throw Err
+// THROW ERROR
 var (
 	ErrStudentInfo   = errors.New("invalid student data")
 	ErrIDRequired    = errors.New("student ID is required")
@@ -41,8 +41,11 @@ var (
 	ErrDublicatedSubject     = errors.New("student cannot have duplicate subject score")
 	ErrStudentNotFound       = errors.New("student not found")
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
+	ErrStudentID = errors.New("student ID not found")
 )
 
+
+// ADD STUDENT
 func (s *StudentService) AddStudent(student *models.Student) error {
 	if student == nil {
 		return ErrStudentInfo
@@ -74,7 +77,7 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 		return ErrEmailFormat
 	}
 
-	// Validate DOB (not in the future)
+	// VALIDATE DOB NOT IN THE FUTURE
 	if student.DateOfBirth.After(time.Now()) {
 		return ErrValidDOB
 	}
@@ -94,6 +97,56 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 	return s.repo.AddStudent(student)
 }
 
+
+
+// UPDATE STUDENT
+func (s *StudentService) UpdateStudent(student *models.Student) error {
+	if !util.IsValidStudentName(student.FullName) {
+		return ErrNameFormat
+	}
+
+	if !util.IsValidStudentEmail(student.Email) {
+		return ErrEmailFormat
+	}
+
+	if student.DateOfBirth.After(time.Now()) {
+		return ErrValidDOB
+	}
+
+	if !util.IsValidClass(student.Class) {
+		return ErrClassFormat
+	}
+
+	if !util.IsValidScores(student.Scores) {
+		return ErrScore
+	}
+	
+	return s.repo.UpdateStudent(student)
+}
+
+
+// DELETE STUDENT
+func (s *StudentService) DeleteStudent(StudentID string) error {
+	if strings.TrimSpace(StudentID) == ""{
+		return ErrStudentID
+	}
+
+	student, err := s.repo.GetStudentByID(StudentID)
+
+	if err != nil {
+		return err
+	}
+
+	if student == nil {
+		return ErrStudentNotFound
+	}
+
+	return s.repo.DeleteStudent(StudentID)
+}
+
+
+
+// ADD SUBJECT SCORE
 func (s *StudentService) AddSubjectScore(studentID string, score *models.SubjectScore) error {
 	student, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
@@ -135,27 +188,3 @@ student != nil =>  student found
 /* Update student
 - Full Update - PUT
 */
-
-func (s *StudentService) UpdateStudent(student *models.Student) error {
-	if !util.IsValidStudentName(student.FullName) {
-		return ErrNameFormat
-	}
-
-	if !util.IsValidStudentEmail(student.Email) {
-		return ErrEmailFormat
-	}
-
-	if student.DateOfBirth.After(time.Now()) {
-		return ErrValidDOB
-	}
-
-	if !util.IsValidClass(student.Class) {
-		return ErrClassFormat
-	}
-
-	if !util.IsValidScores(student.Scores) {
-		return ErrScore
-	}
-	
-	return s.repo.UpdateStudent(student)
-}

@@ -69,7 +69,7 @@ func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 	return repo, nil
 }
 
-// CRUD Student
+// ADD STUDENT
 func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 
 	if _, existed := r.students[student.ID]; existed {
@@ -80,12 +80,22 @@ func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 	return r.saveFile()
 }
 
-// CRUD update student
+//  UPDATE STUDENT
 func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
 	if _, existed := r.students[student.ID]; !existed {
 		return fmt.Errorf("student with ID %s not existed", student.ID)
 	}
 
 	r.students[student.ID] = student
+	return r.saveFile()
+}
+
+// DELETE STUDENT
+func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
+	if _, existed := r.students[studentID]; !existed {
+		return fmt.Errorf("student with ID %s does not existed", studentID)
+	}
+	delete(r.students, studentID)
+
 	return r.saveFile()
 }
