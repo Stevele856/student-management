@@ -12,16 +12,16 @@ type StudentRepository interface {
 	DeleteStudent(studentID string) error
 	GetAllStudents() ([]*models.Student, error)
 	GetStudentByID(studentID string) (*models.Student, error)
-	GetStudentByEmail(email string) (*models.Student, error)
+	GetStudentByEmail(StudentEmail string) (*models.Student, error)
 
 	// CRUD scores
-	AddScores(studentID string, Scores *models.SubjectScore) error
-	UpdateScores(studentID string, Scores *models.SubjectScore) error
-	DeleteScores(studentID, subject string) error
+	AddScore(studentID string, score *models.SubjectScore) error
+	UpdateScore(studentID string, score *models.SubjectScore) error
+	DeleteScore(studentID, subject string) error
 	GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error)
 	GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error)
 
 	// Search/filter
 	SearchStudentByName(studentName string) ([]*models.Student, error)
-	GetStudentByClass(class string) ([]*models.Student, error)
+	SearchStudentByClass(StudentClass string) ([]*models.Student, error)
 }

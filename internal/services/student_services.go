@@ -31,17 +31,18 @@ var (
 	ErrSubjectFormat = errors.New("invalid subject format")
 	ErrValidDOB      = errors.New("date of birth cannot be in the future")
 
-	ErrEmailRequired = errors.New("student name is required")
-	ErrNameRequired  = errors.New("student email is required")
+	ErrEmailRequired = errors.New("student email is required")
+	ErrNameRequired  = errors.New("student name is required")
 	ErrEmailExisted  = errors.New("student email already existed")
 	ErrStudentClass  = errors.New("student must belong to a class")
 
-	ErrScore                 = errors.New("score must between 0-10")
-	ErrMaxScore              = errors.New("Maximum 10 scores")
-	ErrDublicatedSubject     = errors.New("student cannot have duplicate subject score")
-	ErrStudentNotFound       = errors.New("student not found")
+	ErrScore             = errors.New("score must between 0-10")
+	ErrMaxScore          = errors.New("Maximum 10 scores")
+	ErrDublicatedSubject = errors.New("student cannot have duplicate subject score")
+	// ErrStudentNotFound       = errors.New("student not found")
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
 	ErrStudentID             = errors.New("student ID not found")
+	ErrStudentEmail          = errors.New("student email does not existed")
 )
 
 // ADD STUDENT
@@ -122,14 +123,14 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 }
 
 // DELETE STUDENT
-func (s *StudentService) DeleteStudent(StudentID string) error {
-	StudentID = strings.TrimSpace(StudentID)
+func (s *StudentService) DeleteStudent(studentID string) error {
+	studentID = strings.TrimSpace(studentID)
 
-	if StudentID == "" {
+	if studentID == "" {
 		return ErrStudentID
 	}
 
-	student, err := s.repo.GetStudentByID(StudentID)
+	student, err := s.repo.GetStudentByID(studentID)
 
 	if err != nil {
 		return err
@@ -139,7 +140,7 @@ func (s *StudentService) DeleteStudent(StudentID string) error {
 		return ErrStudentNotFound
 	}
 
-	return s.repo.DeleteStudent(StudentID)
+	return s.repo.DeleteStudent(studentID)
 }
 
 // GET ALL STUDENT
@@ -156,15 +157,24 @@ func (s *StudentService) GetStudentByID(studentID string) (*models.Student, erro
 	return s.repo.GetStudentByID(studentID)
 }
 
+// GET STUDENT BY EMAIL
+func (s *StudentService) GetStudentByEmail(studentEmail string) (*models.Student, error) {
+	studentEmail = strings.TrimSpace(studentEmail)
+	if studentEmail == "" {
+		return nil, ErrStudentEmail
+	}
+	if !util.IsValidStudentEmail(studentEmail) {
+		return nil, ErrEmailFormat
+	}
+	return s.repo.GetStudentByEmail(studentEmail)
+}
+
 // ADD SUBJECT SCORE
-func (s *StudentService) AddSubjectScore(studentID string, score *models.SubjectScore) error {
+func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) error {
+
 	student, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
 		return err
-	}
-
-	if student == nil {
-		return ErrStudentNotFound
 	}
 
 	score.Subject = strings.TrimSpace(score.Subject)
@@ -176,18 +186,18 @@ func (s *StudentService) AddSubjectScore(studentID string, score *models.Subject
 		return ErrScore
 	}
 
-	if len(student.Scores) > 10 {
+	if len(student.Scores) >= 10 {
 		return ErrMaxScore
 	}
 
-	// Dublicate subject
+	// CHECK DIBLICATE SUBJECT
 	for _, s := range student.Scores {
 		if strings.EqualFold(s.Subject, score.Subject) {
 			return ErrSubjectAlreadyExisted
 		}
 	}
 
-	return s.repo.AddScores(studentID, score)
+	return s.repo.AddScore(studentID, score)
 }
 
 /*

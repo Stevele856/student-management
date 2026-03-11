@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/student-management/internal/models"
 )
@@ -14,7 +15,7 @@ type InMemoStudentRepo struct {
 	filePath string // Read/write JSON - Read file when initialized - Write file after Add/update/delete
 }
 
-// Load JSON
+// LOAD JSON
 func (r *InMemoStudentRepo) loadFile() error {
 
 	file, err := os.ReadFile(r.filePath)
@@ -39,15 +40,15 @@ func (r *InMemoStudentRepo) loadFile() error {
 	return nil
 }
 
-// Save JSON
+// SAVE JSON
 func (r *InMemoStudentRepo) saveFile() error {
 
-	var data []*models.Student
-	for _, value := range r.students {
-		data = append(data, value)
+	var studentData []*models.Student
+	for _, student := range r.students {
+		studentData = append(studentData, student)
 	}
 
-	students, err := json.MarshalIndent(data, "", "  ")
+	students, err := json.MarshalIndent(studentData, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func (r *InMemoStudentRepo) saveFile() error {
 	return os.WriteFile(r.filePath, students, 0644)
 }
 
-// Initilize an empty constructor
+// INITIALIZE EMPTY CONSTRUCTOR
 func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 	repo := &InMemoStudentRepo{
 		students: make(map[string]*models.Student),
@@ -119,3 +120,29 @@ func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, e
 
 	return student, nil
 }
+
+// GET STUDENT BY EMAIL
+func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Student, error) {
+	for _, student := range r.students {
+		if strings.EqualFold(student.Email, studentEmail) {
+			return student, nil
+		}
+	}
+	return nil, fmt.Errorf("student with Email %s does not existed", studentEmail)
+}
+
+// ADD SCORE
+func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScore) error {
+
+	student, existed := r.students[studentID]
+
+	if !existed {
+		return fmt.Errorf("student with ID %s does not existed", studentID)
+	}
+
+	student.Scores = append(student.Scores, score)
+
+	return r.saveFile()
+}
+
+// UPDATE SCORE
