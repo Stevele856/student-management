@@ -145,6 +145,12 @@ func (s *StudentService) DeleteStudent(StudentID string) error {
 }
 
 
+// GET ALL STUDENT
+func (s *StudentService) GetAllStudent() ([]*models.Student, error) {
+	return s.repo.GetAllStudents()
+}
+
+
 
 // ADD SUBJECT SCORE
 func (s *StudentService) AddSubjectScore(studentID string, score *models.SubjectScore) error {

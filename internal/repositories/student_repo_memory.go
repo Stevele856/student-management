@@ -99,3 +99,15 @@ func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 
 	return r.saveFile()
 }
+
+
+// GET ALL STUDENT
+func (r *InMemoStudentRepo) GetAllStudent() ([]*models.Student, error){
+	students := make([]*models.Student, 0, len(r.students))
+
+	for _, s := range r.students {
+		students = append(students, s)
+	}
+
+	return students, nil
+}
