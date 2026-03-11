@@ -11,7 +11,7 @@ import (
 
 type InMemoStudentRepo struct {
 	students map[string]*models.Student
-	filePath string 				// Read/write JSON - Read file when initialized - Write file after Add/update/delete		
+	filePath string // Read/write JSON - Read file when initialized - Write file after Add/update/delete
 }
 
 // Load JSON
@@ -80,7 +80,7 @@ func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 	return r.saveFile()
 }
 
-//  UPDATE STUDENT
+// UPDATE STUDENT
 func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
 	if _, existed := r.students[student.ID]; !existed {
 		return fmt.Errorf("student with ID %s not existed", student.ID)
@@ -100,14 +100,22 @@ func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	return r.saveFile()
 }
 
-
 // GET ALL STUDENT
-func (r *InMemoStudentRepo) GetAllStudent() ([]*models.Student, error){
+func (r *InMemoStudentRepo) GetAllStudent() ([]*models.Student, error) {
 	students := make([]*models.Student, 0, len(r.students))
 
 	for _, s := range r.students {
 		students = append(students, s)
 	}
-
 	return students, nil
+}
+
+// GET STUDENT BY ID
+func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, error) {
+	student, existed := r.students[studentID]
+	if !existed {
+		return nil, fmt.Errorf("student with ID %s does not existed", studentID)
+	}
+
+	return student, nil
 }

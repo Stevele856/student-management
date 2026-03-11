@@ -41,9 +41,8 @@ var (
 	ErrDublicatedSubject     = errors.New("student cannot have duplicate subject score")
 	ErrStudentNotFound       = errors.New("student not found")
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
-	ErrStudentID = errors.New("student ID not found")
+	ErrStudentID             = errors.New("student ID not found")
 )
-
 
 // ADD STUDENT
 func (s *StudentService) AddStudent(student *models.Student) error {
@@ -97,8 +96,6 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 	return s.repo.AddStudent(student)
 }
 
-
-
 // UPDATE STUDENT
 func (s *StudentService) UpdateStudent(student *models.Student) error {
 	if !util.IsValidStudentName(student.FullName) {
@@ -120,14 +117,15 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 	if !util.IsValidScores(student.Scores) {
 		return ErrScore
 	}
-	
+
 	return s.repo.UpdateStudent(student)
 }
 
-
 // DELETE STUDENT
 func (s *StudentService) DeleteStudent(StudentID string) error {
-	if strings.TrimSpace(StudentID) == ""{
+	StudentID = strings.TrimSpace(StudentID)
+
+	if StudentID == "" {
 		return ErrStudentID
 	}
 
@@ -144,13 +142,19 @@ func (s *StudentService) DeleteStudent(StudentID string) error {
 	return s.repo.DeleteStudent(StudentID)
 }
 
-
 // GET ALL STUDENT
 func (s *StudentService) GetAllStudent() ([]*models.Student, error) {
 	return s.repo.GetAllStudents()
 }
 
-
+// GET STUDENT BY ID
+func (s *StudentService) GetStudentByID(studentID string) (*models.Student, error) {
+	studentID = strings.TrimSpace(studentID)
+	if studentID == "" {
+		return nil, ErrStudentID
+	}
+	return s.repo.GetStudentByID(studentID)
+}
 
 // ADD SUBJECT SCORE
 func (s *StudentService) AddSubjectScore(studentID string, score *models.SubjectScore) error {
