@@ -39,7 +39,7 @@ var (
 	ErrScore             = errors.New("score must between 0-10")
 	ErrMaxScore          = errors.New("Maximum 10 scores")
 	ErrDublicatedSubject = errors.New("student cannot have duplicate subject score")
-	// ErrStudentNotFound       = errors.New("student not found")
+	ErrStudentNotFound       = errors.New("student not found")
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
 	ErrStudentID             = errors.New("student ID not found")
 	ErrStudentEmail          = errors.New("student email does not existed")
@@ -198,6 +198,26 @@ func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) 
 	}
 
 	return s.repo.AddScore(studentID, score)
+}
+
+// UPDATE SCORE
+func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScore) error{
+	_, err := s.repo.GetStudentByID(studentID)
+
+	if err != nil {
+		return err
+	}
+
+	score.Subject = strings.TrimSpace(score.Subject)
+	if !util.IsValidSubject(score.Subject){
+		return ErrSubjectFormat
+	}
+
+	if !util.IsValidSubjectScore(score.Score){
+		return ErrScore
+	}
+
+	return s.repo.UpdateScore(studentID, score)
 }
 
 /*

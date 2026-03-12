@@ -146,3 +146,18 @@ func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScor
 }
 
 // UPDATE SCORE
+func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectScore) error {
+	student, existed := r.students[studentID]
+
+	if !existed {
+		return fmt.Errorf("student with ID %s does not existed", studentID)
+	}
+
+	for _, s := range student.Scores{
+		if strings.EqualFold(s.Subject, score.Subject){
+			s.Score = score.Score
+			return r.saveFile()
+		}
+	}
+	return fmt.Errorf("subject %s does not existed", score.Subject)
+}
