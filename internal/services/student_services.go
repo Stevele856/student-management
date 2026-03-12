@@ -35,6 +35,7 @@ var (
 	ErrNameRequired  = errors.New("student name is required")
 	ErrEmailExisted  = errors.New("student email already existed")
 	ErrStudentClass  = errors.New("student must belong to a class")
+	ErrSubjectEmpty = errors.New("subject is require to check score")
 
 	ErrScore                 = errors.New("score must between 0-10")
 	ErrMaxScore              = errors.New("Maximum 10 scores")
@@ -225,7 +226,15 @@ func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScor
 func (s *StudentService) DeleteScore(studentID, subject string) error {
 	studentID = strings.TrimSpace(studentID)
 	subject = strings.TrimSpace(subject)
-	
+
+	if studentID == ""{
+		return ErrIDRequired
+	}
+
+	if subject == ""{
+		return ErrSubjectEmpty
+	}
+
 	_, err := s.repo.GetStudentByID(studentID)
 
 	if err != nil {
@@ -236,6 +245,17 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 	}
 
 	return s.repo.DeleteScore(studentID, subject)
+}
+
+// GET SCORE
+func (s *StudentService) GetScore(studentID string) ([]*models.SubjectScore, error){
+	studentID = strings.TrimSpace(studentID)
+
+	if studentID == ""{
+		return nil, ErrIDRequired
+	}
+
+	return s.repo.GetScoresByStudentID(studentID)
 }
 
 

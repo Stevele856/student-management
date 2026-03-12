@@ -4,8 +4,6 @@ package util
 import (
 	"net/mail"
 	"regexp"
-	"strings"
-
 	"github.com/student-management/internal/models"
 )
 

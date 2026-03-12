@@ -10,6 +10,8 @@ import (
 	"github.com/student-management/internal/models"
 )
 
+var _ StudentRepository = &InMemoStudentRepo{}
+
 type InMemoStudentRepo struct {
 	students map[string]*models.Student
 	filePath string // Read/write JSON - Read file when initialized - Write file after Add/update/delete
@@ -70,7 +72,9 @@ func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 	return repo, nil
 }
 
-// ADD STUDENT
+
+
+// CRUD STUDENT
 func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 
 	if _, existed := r.students[student.ID]; existed {
@@ -81,7 +85,7 @@ func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 	return r.saveFile()
 }
 
-// UPDATE STUDENT
+
 func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
 	if _, existed := r.students[student.ID]; !existed {
 		return fmt.Errorf("student with ID %s not existed", student.ID)
@@ -91,7 +95,7 @@ func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
 	return r.saveFile()
 }
 
-// DELETE STUDENT
+
 func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	if _, existed := r.students[studentID]; !existed {
 		return fmt.Errorf("student with ID %s does not existed", studentID)
@@ -101,8 +105,8 @@ func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	return r.saveFile()
 }
 
-// GET ALL STUDENT
-func (r *InMemoStudentRepo) GetAllStudent() ([]*models.Student, error) {
+
+func (r *InMemoStudentRepo) GetAllStudents() ([]*models.Student, error) {
 	students := make([]*models.Student, 0, len(r.students))
 
 	for _, s := range r.students {
@@ -111,7 +115,7 @@ func (r *InMemoStudentRepo) GetAllStudent() ([]*models.Student, error) {
 	return students, nil
 }
 
-// GET STUDENT BY ID
+
 func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, error) {
 	student, existed := r.students[studentID]
 	if !existed {
@@ -121,7 +125,7 @@ func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, e
 	return student, nil
 }
 
-// GET STUDENT BY EMAIL
+
 func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Student, error) {
 	for _, student := range r.students {
 		if strings.EqualFold(student.Email, studentEmail) {
@@ -131,7 +135,9 @@ func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Stud
 	return nil, fmt.Errorf("student with Email %s does not existed", studentEmail)
 }
 
-// ADD SCORE
+
+
+// IMPLEMENT CRUD SCORE
 func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScore) error {
 
 	student, existed := r.students[studentID]
@@ -145,7 +151,7 @@ func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScor
 	return r.saveFile()
 }
 
-// UPDATE SCORE
+
 func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectScore) error {
 	student, existed := r.students[studentID]
 
@@ -153,16 +159,16 @@ func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectS
 		return fmt.Errorf("student with ID %s does not existed", studentID)
 	}
 
-	for _, s := range student.Scores{
+	for i, s := range student.Scores{
 		if strings.EqualFold(s.Subject, score.Subject){
-			s.Score = score.Score
+			student.Scores[i].Score = score.Score
 			return r.saveFile()
 		}
 	}
 	return fmt.Errorf("subject %s does not existed", score.Subject)
 }
 
-// DELETE SCORE
+
 func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 	student, existed := r.students[studentID]
 
@@ -190,3 +196,18 @@ student.Scores = []*models.SubjectScore{
 	- [i+1:]... - Lấy từ index i+1 đến hết
 }
 */
+
+func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error){
+	
+	student, existed := r.students[studentID]
+
+	if !existed {
+		return nil, fmt.Errorf("student with ID %s does not existed", studentID)
+	}
+
+	return student.Scores, nil
+}
+
+func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error){
+
+}
