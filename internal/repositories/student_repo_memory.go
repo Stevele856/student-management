@@ -161,3 +161,32 @@ func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectS
 	}
 	return fmt.Errorf("subject %s does not existed", score.Subject)
 }
+
+// DELETE SCORE
+func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
+	student, existed := r.students[studentID]
+
+	if !existed {
+		return fmt.Errorf("student with ID %s does not existed", studentID)
+	}
+
+	for i, s := range student.Scores{
+		if strings.EqualFold(s.Subject, subject){
+			student.Scores = append(student.Scores[:i],student.Scores[i+1:]...)
+			return r.saveFile()
+		}
+		
+	}
+	return fmt.Errorf("subject %s does not existed", subject)
+}
+
+/*
+student.Scores = []*models.SubjectScore{
+	{Subject: "Toan", Score: 7.5}		i
+	{Subject: "Tieng Anh", Score: 8}	i+1
+	{Subject: "Tieng Viet", Score: 6}	i+2
+
+	- [:i] - Lấy từ đầu đến trước index i
+	- [i+1:]... - Lấy từ index i+1 đến hết
+}
+*/

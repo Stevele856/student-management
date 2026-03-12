@@ -36,9 +36,9 @@ var (
 	ErrEmailExisted  = errors.New("student email already existed")
 	ErrStudentClass  = errors.New("student must belong to a class")
 
-	ErrScore             = errors.New("score must between 0-10")
-	ErrMaxScore          = errors.New("Maximum 10 scores")
-	ErrDublicatedSubject = errors.New("student cannot have duplicate subject score")
+	ErrScore                 = errors.New("score must between 0-10")
+	ErrMaxScore              = errors.New("Maximum 10 scores")
+	ErrDublicatedSubject     = errors.New("student cannot have duplicate subject score")
 	ErrStudentNotFound       = errors.New("student not found")
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
 	ErrStudentID             = errors.New("student ID not found")
@@ -201,7 +201,8 @@ func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) 
 }
 
 // UPDATE SCORE
-func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScore) error{
+func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScore) error {
+	studentID = strings.TrimSpace(studentID)
 	_, err := s.repo.GetStudentByID(studentID)
 
 	if err != nil {
@@ -209,16 +210,43 @@ func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScor
 	}
 
 	score.Subject = strings.TrimSpace(score.Subject)
-	if !util.IsValidSubject(score.Subject){
+	if !util.IsValidSubject(score.Subject) {
 		return ErrSubjectFormat
 	}
 
-	if !util.IsValidSubjectScore(score.Score){
+	if !util.IsValidSubjectScore(score.Score) {
 		return ErrScore
 	}
 
 	return s.repo.UpdateScore(studentID, score)
 }
+
+// DELETE SCORE
+func (s *StudentService) DeleteScore(studentID, subject string) error {
+	studentID = strings.TrimSpace(studentID)
+	subject = strings.TrimSpace(subject)
+	
+	_, err := s.repo.GetStudentByID(studentID)
+
+	if err != nil {
+		return err
+	}
+	if !util.IsValidSubject(subject){
+		return ErrSubjectFormat
+	}
+
+	return s.repo.DeleteScore(studentID, subject)
+}
+
+
+
+
+
+
+
+
+
+
 
 /*
 student == nil => student not found

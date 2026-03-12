@@ -10,8 +10,6 @@ import (
 )
 
 func IsValidStudentEmail(email string) bool {
-	email = strings.TrimSpace(email)
-
 	if len(email) == 0 || len(email) > 254 {
 		return false
 	}
@@ -24,7 +22,6 @@ func IsValidStudentEmail(email string) bool {
 
 var studentName = regexp.MustCompile(`^[\p{L}]+(?:[\s'-][\p{L}]+)*$`)
 func IsValidStudentName(name string) bool {
-	name = strings.TrimSpace(name)
 
 	if len(name) < 3 || len(name) > 50 {
 		return false
@@ -37,8 +34,6 @@ func IsValidStudentName(name string) bool {
 
 var studentClass = regexp.MustCompile(`^\d{1,2}-?[A-Z]$`)
 func IsValidClass(class string) bool {
-	class = strings.TrimSpace(class)
-
 	return studentClass.MatchString(class)
 }
 
@@ -64,12 +59,8 @@ func IsValidSubjectScore(score float64) bool {
 	return score >= 0 && score <= 10
 }
 
-
-
 var studentSubject = regexp.MustCompile(`^[\p{L}\s]{3,30}$`)
 func IsValidSubject(subject string) bool {
-	subject = strings.TrimSpace(subject)
-
 	return studentSubject.MatchString(subject)
 
 }
