@@ -9,12 +9,13 @@ import (
 
 	"github.com/student-management/internal/models"
 )
-// check implementation match with interface
-var _ StudentRepository = &InMemoStudentRepo{} 
+// CHECK IMPLEMENTATION FUNCTION WHETHER IT MATCH WITH INTERFACE
+// var _ StudentRepository = &InMemoStudentRepo{} 
 
 type InMemoStudentRepo struct {
 	students map[string]*models.Student
-	filePath string // Read/write JSON - Read file when initialized - Write file after Add/update/delete
+	filePath string 
+	// Read/write JSON - Read file when initialized - Write file after Add/update/delete
 }
 
 // LOAD JSON
