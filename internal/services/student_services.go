@@ -43,7 +43,7 @@ var (
 	ErrStudentNotFound       = errors.New("student not found")
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
 	ErrStudentID             = errors.New("student ID not found")
-	ErrStudentEmail          = errors.New("student email does not existed")
+	ErrStudentEmail          = errors.New("student email does not exist")
 )
 
 // ADD STUDENT
@@ -247,8 +247,8 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 	return s.repo.DeleteScore(studentID, subject)
 }
 
-// GET SCORE
-func (s *StudentService) GetScore(studentID string) ([]*models.SubjectScore, error){
+// GET SCORE BY STUDENT ID
+func (s *StudentService) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error){
 	studentID = strings.TrimSpace(studentID)
 
 	if studentID == ""{
@@ -256,6 +256,36 @@ func (s *StudentService) GetScore(studentID string) ([]*models.SubjectScore, err
 	}
 
 	return s.repo.GetScoresByStudentID(studentID)
+}
+
+// GET SCORE BY SUBJECT
+func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error){
+	studentID = strings.TrimSpace(studentID)
+	subject = strings.TrimSpace(subject)
+
+	if studentID == ""{
+		return nil, ErrIDRequired
+	}
+
+	if subject == ""{
+		return nil, ErrSubjectEmpty
+	}
+
+	return s.repo.GetScoresBySubject(studentID, subject)
+}
+
+// 	SEARCH STUDENT BY NAME
+func (s *StudentService) SearchStudentByName(studentName string) ([]*models.Student, error){
+	studentName = strings.TrimSpace(studentName)
+	if studentName == ""{
+		return nil, ErrNameRequired
+	}
+
+	if !util.IsValidStudentName(studentName){
+		return nil, ErrNameFormat
+	}	
+
+	return s.repo.SearchStudentByName(studentName)
 }
 
 

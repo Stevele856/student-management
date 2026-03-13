@@ -9,8 +9,8 @@ import (
 
 	"github.com/student-management/internal/models"
 )
-
-var _ StudentRepository = &InMemoStudentRepo{}
+// check implementation match with interface
+var _ StudentRepository = &InMemoStudentRepo{} 
 
 type InMemoStudentRepo struct {
 	students map[string]*models.Student
@@ -98,7 +98,7 @@ func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
 
 func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	if _, existed := r.students[studentID]; !existed {
-		return fmt.Errorf("student with ID %s does not existed", studentID)
+		return fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 	delete(r.students, studentID)
 
@@ -119,7 +119,7 @@ func (r *InMemoStudentRepo) GetAllStudents() ([]*models.Student, error) {
 func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, error) {
 	student, existed := r.students[studentID]
 	if !existed {
-		return nil, fmt.Errorf("student with ID %s does not existed", studentID)
+		return nil, fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
 	return student, nil
@@ -132,7 +132,7 @@ func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Stud
 			return student, nil
 		}
 	}
-	return nil, fmt.Errorf("student with Email %s does not existed", studentEmail)
+	return nil, fmt.Errorf("student with Email %s does not exist", studentEmail)
 }
 
 
@@ -143,7 +143,7 @@ func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScor
 	student, existed := r.students[studentID]
 
 	if !existed {
-		return fmt.Errorf("student with ID %s does not existed", studentID)
+		return fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
 	student.Scores = append(student.Scores, score)
@@ -156,16 +156,17 @@ func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectS
 	student, existed := r.students[studentID]
 
 	if !existed {
-		return fmt.Errorf("student with ID %s does not existed", studentID)
+		return fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
 	for i, s := range student.Scores{
 		if strings.EqualFold(s.Subject, score.Subject){
+			// s.Score = score.Score -> s is copy, not pointer
 			student.Scores[i].Score = score.Score
 			return r.saveFile()
 		}
 	}
-	return fmt.Errorf("subject %s does not existed", score.Subject)
+	return fmt.Errorf("subject %s does not exist", score.Subject)
 }
 
 
@@ -173,7 +174,7 @@ func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 	student, existed := r.students[studentID]
 
 	if !existed {
-		return fmt.Errorf("student with ID %s does not existed", studentID)
+		return fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
 	for i, s := range student.Scores{
@@ -183,7 +184,7 @@ func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 		}
 		
 	}
-	return fmt.Errorf("subject %s does not existed", subject)
+	return fmt.Errorf("subject %s does not exist", subject)
 }
 
 /*
@@ -202,12 +203,38 @@ func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*models.Su
 	student, existed := r.students[studentID]
 
 	if !existed {
-		return nil, fmt.Errorf("student with ID %s does not existed", studentID)
+		return nil, fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
 	return student.Scores, nil
 }
 
 func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error){
+	student, existed := r.students[studentID]
+
+	if !existed {
+		return nil, fmt.Errorf("student with ID %s does not exist", studentID)
+	}
+
+	for _, s := range student.Scores{
+		if strings.EqualFold(s.Subject, subject){
+			return s, nil
+		}
+	}
+	return nil, fmt.Errorf("subject %s does not exist", subject)
+}
+
+
+// SEARCH STUDENT BY NAME
+func (r *InMemoStudentRepo) SearchStudentByName(studentName string) ([]*models.Student, error){
+	result := []*models.Student{}
+
+	for _, student := range r.students{
+		if strings.Contains(strings.ToLower(student.FullName), strings.ToLower(studentName)){
+			result = append(result, student)
+		}
+	}
+
+	return result, nil
 
 }

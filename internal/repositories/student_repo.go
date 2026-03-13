@@ -23,5 +23,4 @@ type StudentRepository interface {
 
 	// Search/filter
 	SearchStudentByName(studentName string) ([]*models.Student, error)
-	SearchStudentByClass(StudentClass string) ([]*models.Student, error)
 }
