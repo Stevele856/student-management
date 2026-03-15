@@ -4,11 +4,20 @@ package models
 
 import "time"
 
+// Enum type
 type Gender string
+type Rank string
 
 const (
-	GenderMale  Gender = "male"
+	GenderMale   Gender = "male"
 	GenderFemale Gender = "female"
+)
+
+const (
+	Excellent Rank = "excellent"
+	Good      Rank = "good"
+	Average   Rank = "average"
+	Weak      Rank = "weak"
 )
 
 type SubjectScore struct {

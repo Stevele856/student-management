@@ -227,15 +227,85 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*mode
 
 
 // SEARCH STUDENT BY NAME
-func (r *InMemoStudentRepo) SearchStudentByName(studentName string) ([]*models.Student, error){
-	result := []*models.Student{}
+// func (r *InMemoStudentRepo) SearchStudentByName(studentName string) ([]*models.Student, error){
+// 	result := []*models.Student{}
 
-	for _, student := range r.students{
-		if strings.Contains(strings.ToLower(student.FullName), strings.ToLower(studentName)){
-			result = append(result, student)
-		}
-	}
+// 	for _, student := range r.students{
+// 		if strings.Contains(strings.ToLower(student.FullName), strings.ToLower(studentName)){
+// 			result = append(result, student)
+// 		}
+// 	}
 
-	return result, nil
+// 	return result, nil
+
+// }
+
+
+
+
+// FILTER
+func (r *InMemoStudentRepo) FilterStudents(filter *models.FilterStudents) ([]*models.FilterStudents, error){
 
 }
+
+
+
+func matchFilter(s *models.Student, f *models.FilterStudents) bool {
+	// FILTER BY NAME
+	if f.Name != "" && !strings.Contains(strings.ToLower(s.FullName), strings.ToLower(f.Name)){
+		return false
+	}
+
+	// FILTER BY CLASS
+	if f.Class != "" && !strings.EqualFold(s.Class, f.Class){
+		return false
+	}
+
+	// FILTER BY YEAR
+	if f.YearOfBirth != 0 && s.DateOfBirth.Year() != f.YearOfBirth {
+		return false
+	}
+
+	// FILTER BY GENDER
+	if f.Gender != "" && !strings.EqualFold(s.Gender, f.Gender){
+		return false
+	}
+
+	// FILTER BY ADDRESS
+	if f.Address != "" && !strings.EqualFold(strings.ToLower(s.Address), strings.ToLower(f.Address)){
+		return false
+	}
+
+	// FILTER BY AVG SCORE
+	// FILTER BY RANK
+
+}
+
+
+
+func CalAvgScore(scores []*models.SubjectScore) float64 {
+	if len(scores) == 0 {
+		return 0
+	}
+
+	var total float64
+	for _, s := range scores{
+		total += s.Score
+	}
+
+	return total / float64(len(scores))
+}
+
+func CalcRankBaseOnAvgScore(avg float64) models.Rank{
+	switch {
+	case avg >= 9.0:
+		return models.Excellent
+	case avg >= 7.0:
+		return models.Good
+	case avg >= 5.0:
+		return models.Average
+	default:
+		return models.Weak
+	}
+}
+

@@ -52,7 +52,6 @@ func IsValidScores(scores []*models.SubjectScore) bool {
 }
 
 
-
 func IsValidSubjectScore(score float64) bool {
 	return score >= 0 && score <= 10
 }

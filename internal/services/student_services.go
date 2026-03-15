@@ -290,10 +290,6 @@ func (s *StudentService) SearchStudentByName(studentName string) ([]*models.Stud
 
 
 
-
-
-
-
 /*
 student == nil => student not found
 student != nil =>  student found
