@@ -9,12 +9,13 @@ import (
 
 	"github.com/student-management/internal/models"
 )
+
 // CHECK IMPLEMENTATION FUNCTION WHETHER IT MATCH WITH INTERFACE
-// var _ StudentRepository = &InMemoStudentRepo{} 
+// var _ StudentRepository = &InMemoStudentRepo{}
 
 type InMemoStudentRepo struct {
 	students map[string]*models.Student
-	filePath string 
+	filePath string
 	// Read/write JSON - Read file when initialized - Write file after Add/update/delete
 }
 
@@ -73,8 +74,6 @@ func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 	return repo, nil
 }
 
-
-
 // CRUD STUDENT
 func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 
@@ -86,7 +85,6 @@ func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 	return r.saveFile()
 }
 
-
 func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
 	if _, existed := r.students[student.ID]; !existed {
 		return fmt.Errorf("student with ID %s not existed", student.ID)
@@ -95,7 +93,6 @@ func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
 	r.students[student.ID] = student
 	return r.saveFile()
 }
-
 
 func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	if _, existed := r.students[studentID]; !existed {
@@ -106,7 +103,6 @@ func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	return r.saveFile()
 }
 
-
 func (r *InMemoStudentRepo) GetAllStudents() ([]*models.Student, error) {
 	students := make([]*models.Student, 0, len(r.students))
 
@@ -115,7 +111,6 @@ func (r *InMemoStudentRepo) GetAllStudents() ([]*models.Student, error) {
 	}
 	return students, nil
 }
-
 
 func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, error) {
 	student, existed := r.students[studentID]
@@ -126,7 +121,6 @@ func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, e
 	return student, nil
 }
 
-
 func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Student, error) {
 	for _, student := range r.students {
 		if strings.EqualFold(student.Email, studentEmail) {
@@ -135,8 +129,6 @@ func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Stud
 	}
 	return nil, fmt.Errorf("student with Email %s does not exist", studentEmail)
 }
-
-
 
 // IMPLEMENT CRUD SCORE
 func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScore) error {
@@ -152,7 +144,6 @@ func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScor
 	return r.saveFile()
 }
 
-
 func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectScore) error {
 	student, existed := r.students[studentID]
 
@@ -160,8 +151,8 @@ func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectS
 		return fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
-	for i, s := range student.Scores{
-		if strings.EqualFold(s.Subject, score.Subject){
+	for i, s := range student.Scores {
+		if strings.EqualFold(s.Subject, score.Subject) {
 			// s.Score = score.Score -> s is copy, not pointer
 			student.Scores[i].Score = score.Score
 			return r.saveFile()
@@ -170,7 +161,6 @@ func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectS
 	return fmt.Errorf("subject %s does not exist", score.Subject)
 }
 
-
 func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 	student, existed := r.students[studentID]
 
@@ -178,12 +168,12 @@ func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 		return fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
-	for i, s := range student.Scores{
-		if strings.EqualFold(s.Subject, subject){
-			student.Scores = append(student.Scores[:i],student.Scores[i+1:]...)
+	for i, s := range student.Scores {
+		if strings.EqualFold(s.Subject, subject) {
+			student.Scores = append(student.Scores[:i], student.Scores[i+1:]...)
 			return r.saveFile()
 		}
-		
+
 	}
 	return fmt.Errorf("subject %s does not exist", subject)
 }
@@ -199,8 +189,8 @@ student.Scores = []*models.SubjectScore{
 }
 */
 
-func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error){
-	
+func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error) {
+
 	student, existed := r.students[studentID]
 
 	if !existed {
@@ -210,21 +200,20 @@ func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*models.Su
 	return student.Scores, nil
 }
 
-func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error){
+func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error) {
 	student, existed := r.students[studentID]
 
 	if !existed {
 		return nil, fmt.Errorf("student with ID %s does not exist", studentID)
 	}
 
-	for _, s := range student.Scores{
-		if strings.EqualFold(s.Subject, subject){
+	for _, s := range student.Scores {
+		if strings.EqualFold(s.Subject, subject) {
 			return s, nil
 		}
 	}
 	return nil, fmt.Errorf("subject %s does not exist", subject)
 }
-
 
 // SEARCH STUDENT BY NAME
 // func (r *InMemoStudentRepo) SearchStudentByName(studentName string) ([]*models.Student, error){
@@ -240,24 +229,29 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*mode
 
 // }
 
-
-
-
 // FILTER
-func (r *InMemoStudentRepo) FilterStudents(filter *models.FilterStudents) ([]*models.FilterStudents, error){
+func (r *InMemoStudentRepo) FilterStudents(filter *models.FilterStudents) ([]*models.Student, error) {
+	result := []*models.Student{}
 
+	for _, s := range r.students{
+		if !matchFilter(s, filter){
+			continue
+		}
+		result = append(result, s)
+	}
+	return result, nil
 }
 
 
 
 func matchFilter(s *models.Student, f *models.FilterStudents) bool {
 	// FILTER BY NAME
-	if f.Name != "" && !strings.Contains(strings.ToLower(s.FullName), strings.ToLower(f.Name)){
+	if f.Name != "" && !strings.Contains(strings.ToLower(s.FullName), strings.ToLower(f.Name)) {
 		return false
 	}
 
 	// FILTER BY CLASS
-	if f.Class != "" && !strings.EqualFold(s.Class, f.Class){
+	if f.Class != "" && !strings.EqualFold(s.Class, f.Class) {
 		return false
 	}
 
@@ -267,21 +261,39 @@ func matchFilter(s *models.Student, f *models.FilterStudents) bool {
 	}
 
 	// FILTER BY GENDER
-	if f.Gender != "" && !strings.EqualFold(s.Gender, f.Gender){
+	if f.Gender != "" && !strings.EqualFold(s.Gender, f.Gender) {
 		return false
 	}
 
 	// FILTER BY ADDRESS
-	if f.Address != "" && !strings.EqualFold(strings.ToLower(s.Address), strings.ToLower(f.Address)){
+	if f.Address != "" && !strings.EqualFold(s.Address, f.Address) {
 		return false
 	}
 
 	// FILTER BY AVG SCORE
-	// FILTER BY RANK
+	if f.MinAvgScore > 0 || f.MaxAvgScore > 0 {
+		avg := CalAvgScore(s.Scores)
 
+		if f.MinAvgScore > 0 && avg < f.MinAvgScore {
+			return false
+		}
+
+		if f.MaxAvgScore > 0 && avg > f.MaxAvgScore {
+			return false
+		}
+
+	}
+
+	// FILTER BY STUDENT RANK
+	if f.StudentRank != "" {
+		rank := CalcStudentRankBaseOnAvgScore(CalAvgScore(s.Scores))
+
+		if f.StudentRank != rank {
+			return false
+		}
+	}
+	return true
 }
-
-
 
 func CalAvgScore(scores []*models.SubjectScore) float64 {
 	if len(scores) == 0 {
@@ -289,14 +301,14 @@ func CalAvgScore(scores []*models.SubjectScore) float64 {
 	}
 
 	var total float64
-	for _, s := range scores{
+	for _, s := range scores {
 		total += s.Score
 	}
 
 	return total / float64(len(scores))
 }
 
-func CalcRankBaseOnAvgScore(avg float64) models.Rank{
+func CalcStudentRankBaseOnAvgScore(avg float64) models.Rank {
 	switch {
 	case avg >= 9.0:
 		return models.Excellent
@@ -309,3 +321,17 @@ func CalcRankBaseOnAvgScore(avg float64) models.Rank{
 	}
 }
 
+
+
+
+
+/*
+	-	Tìm học sinh có điểm TB > 8 => minScore = 8 => Điểm TB dưới 8 => loại
+	-> f.minScore > 0 && avg < f.minScore{
+			return false
+		}
+			Tìm học sinh có điểm TB < 5 => maxScore = 5 => Điểm TB lớn hơn 5 => loại
+	-> f.maxScore > 0 && avg > f.maxScore{
+			return false
+		}
+*/
