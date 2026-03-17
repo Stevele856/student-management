@@ -215,19 +215,8 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*mode
 	return nil, fmt.Errorf("subject %s does not exist", subject)
 }
 
-// SEARCH STUDENT BY NAME
-// func (r *InMemoStudentRepo) SearchStudentByName(studentName string) ([]*models.Student, error){
-// 	result := []*models.Student{}
 
-// 	for _, student := range r.students{
-// 		if strings.Contains(strings.ToLower(student.FullName), strings.ToLower(studentName)){
-// 			result = append(result, student)
-// 		}
-// 	}
 
-// 	return result, nil
-
-// }
 
 // FILTER
 func (r *InMemoStudentRepo) FilterStudents(filter *models.FilterStudents) ([]*models.Student, error) {

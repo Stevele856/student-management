@@ -35,7 +35,7 @@ var (
 	ErrNameRequired  = errors.New("student name is required")
 	ErrEmailExisted  = errors.New("student email already existed")
 	ErrStudentClass  = errors.New("student must belong to a class")
-	ErrSubjectEmpty = errors.New("subject is require to check score")
+	ErrSubjectEmpty  = errors.New("subject is require to check score")
 
 	ErrScore                 = errors.New("score must between 0-10")
 	ErrMaxScore              = errors.New("Maximum 10 scores")
@@ -44,6 +44,12 @@ var (
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
 	ErrStudentID             = errors.New("student ID not found")
 	ErrStudentEmail          = errors.New("student email does not exist")
+
+	ErrInvalidYear     = errors.New("invalid year of birth")
+	ErrInvalidGender   = errors.New("gender must be 'male' or 'female'")
+	ErrAddressTooShort = errors.New("address too short")
+	ErrInvalidMinMax   = errors.New("min score cannot be greater than max score")
+	ErrStudentRank     = errors.New("student rank must be 'excellent', 'good', 'average' or 'weak'")
 )
 
 // ADD STUDENT
@@ -227,11 +233,11 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 	studentID = strings.TrimSpace(studentID)
 	subject = strings.TrimSpace(subject)
 
-	if studentID == ""{
+	if studentID == "" {
 		return ErrIDRequired
 	}
 
-	if subject == ""{
+	if subject == "" {
 		return ErrSubjectEmpty
 	}
 
@@ -240,7 +246,7 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 	if err != nil {
 		return err
 	}
-	if !util.IsValidSubject(subject){
+	if !util.IsValidSubject(subject) {
 		return ErrSubjectFormat
 	}
 
@@ -248,10 +254,10 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 }
 
 // GET SCORE BY STUDENT ID
-func (s *StudentService) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error){
+func (s *StudentService) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error) {
 	studentID = strings.TrimSpace(studentID)
 
-	if studentID == ""{
+	if studentID == "" {
 		return nil, ErrIDRequired
 	}
 
@@ -259,36 +265,87 @@ func (s *StudentService) GetScoresByStudentID(studentID string) ([]*models.Subje
 }
 
 // GET SCORE BY SUBJECT
-func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error){
+func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error) {
 	studentID = strings.TrimSpace(studentID)
 	subject = strings.TrimSpace(subject)
 
-	if studentID == ""{
+	if studentID == "" {
 		return nil, ErrIDRequired
 	}
 
-	if subject == ""{
+	if subject == "" {
 		return nil, ErrSubjectEmpty
 	}
 
 	return s.repo.GetScoresBySubject(studentID, subject)
 }
 
-// 	SEARCH STUDENT BY NAME
-// func (s *StudentService) SearchStudentByName(studentName string) ([]*models.Student, error){
-// 	studentName = strings.TrimSpace(studentName)
-// 	if studentName == ""{
-// 		return nil, ErrNameRequired
-// 	}
+func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*models.Student, error) {
+	if filter == nil {
+		return s.repo.GetAllStudents()
+	}
 
-// 	if !util.IsValidStudentName(studentName){
-// 		return nil, ErrNameFormat
-// 	}	
+	// VALIDATE NAME
+	if filter.Name != "" {
+		filter.Name = strings.TrimSpace(filter.Name)
+		if !util.IsValidStudentName(filter.Name) {
+			return nil, ErrNameFormat
+		}
+	}
 
-// 	return s.repo.SearchStudentByName(studentName)
-// }
+	// VALIDATE CLASS
+	if filter.Class != "" {
+		filter.Class = strings.TrimSpace(filter.Class)
+		if !util.IsValidClass(filter.Class) {
+			return nil, ErrClassFormat
+		}
+	}
 
+	// VALIDATE DATE OF BIRTH
+	if filter.YearOfBirth != 0 {
+		currentYear := time.Now().Year()
 
+		if filter.YearOfBirth > currentYear {
+			return nil, ErrInvalidYear
+		}
+	}
+
+	// VALIDATE GENDER
+	if filter.Gender != "" {
+		filter.Class = strings.TrimSpace(filter.Gender)
+
+		if filter.Class != "male" && filter.Class != "female" {
+			return nil, ErrInvalidGender
+		}
+	}
+
+	// VALIDATE ADDRESS
+	if filter.Address != "" && len([]rune(filter.Address)) < 5 {
+		return nil, ErrAddressTooShort
+	}
+
+	// VALIDATE SCORE RANGE
+	if filter.MinAvgScore < 0 || filter.MinAvgScore > 10 ||
+		filter.MaxAvgScore < 0 || filter.MaxAvgScore > 10 {
+		return nil, ErrScore
+	}
+
+	if filter.MinAvgScore > 0 && filter.MaxAvgScore > 0 &&
+		filter.MinAvgScore > filter.MaxAvgScore {
+		return nil, ErrInvalidMinMax
+	}
+
+	// VALIDATE STUDENT RANK
+	if filter.StudentRank != "" {
+		rank := strings.TrimSpace(string(filter.StudentRank))
+		if rank != "excellent" && rank != "good" && rank != "average" && rank != "weak" {
+			return nil, ErrStudentRank
+		}
+	}
+
+	return s.repo.FilterStudent(filter)
+
+}
 
 /*
 student == nil => student not found
