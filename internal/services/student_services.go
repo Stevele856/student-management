@@ -275,18 +275,18 @@ func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.
 }
 
 // 	SEARCH STUDENT BY NAME
-func (s *StudentService) SearchStudentByName(studentName string) ([]*models.Student, error){
-	studentName = strings.TrimSpace(studentName)
-	if studentName == ""{
-		return nil, ErrNameRequired
-	}
+// func (s *StudentService) SearchStudentByName(studentName string) ([]*models.Student, error){
+// 	studentName = strings.TrimSpace(studentName)
+// 	if studentName == ""{
+// 		return nil, ErrNameRequired
+// 	}
 
-	if !util.IsValidStudentName(studentName){
-		return nil, ErrNameFormat
-	}	
+// 	if !util.IsValidStudentName(studentName){
+// 		return nil, ErrNameFormat
+// 	}	
 
-	return s.repo.SearchStudentByName(studentName)
-}
+// 	return s.repo.SearchStudentByName(studentName)
+// }
 
 
 
