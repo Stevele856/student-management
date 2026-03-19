@@ -21,8 +21,6 @@ type StudentRepository interface {
 	GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error)
 	GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error)
 
-	// Search/filter
-	// SearchStudentByName(studentName string) ([]*models.Student, error)
-	FilterStudent(filter *models.FilterStudents) ([]*models.Student, error)
-	
+	// Filter
+	FilterStudents(filter *models.FilterStudents) ([]*models.Student, error)	
 }

@@ -343,7 +343,7 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 		}
 	}
 
-	return s.repo.FilterStudent(filter)
+	return s.repo.FilterStudents(filter)
 
 }
 

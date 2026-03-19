@@ -6,13 +6,12 @@ import "time"
 
 // Enum type
 type Gender string
-type Rank string
-
 const (
 	GenderMale   Gender = "male"
 	GenderFemale Gender = "female"
 )
 
+type Rank string
 const (
 	Excellent Rank = "excellent"
 	Good      Rank = "good"
