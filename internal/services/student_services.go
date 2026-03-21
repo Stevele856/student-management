@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/student-management/internal/models"
 	"github.com/student-management/internal/repositories"
-	"github.com/student-management/pkg/util"
+	"github.com/student-management/pkg/utils"
 )
 
 type StudentService struct {
@@ -76,11 +76,11 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 		return ErrEmailExisted
 	}
 
-	if !util.IsValidStudentName(student.FullName) {
+	if !utils.IsValidStudentName(student.FullName) {
 		return ErrNameFormat
 	}
 
-	if !util.IsValidStudentEmail(student.Email) {
+	if !utils.IsValidStudentEmail(student.Email) {
 		return ErrEmailFormat
 	}
 
@@ -93,11 +93,11 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 	if student.Class == "" {
 		return ErrStudentClass
 	}
-	if !util.IsValidClass(student.Class) {
+	if !utils.IsValidClass(student.Class) {
 		return ErrClassFormat
 	}
 
-	if !util.IsValidScores(student.Scores) {
+	if !utils.IsValidScores(student.Scores) {
 		return ErrScore
 	}
 
@@ -106,11 +106,11 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 
 // UPDATE STUDENT
 func (s *StudentService) UpdateStudent(student *models.Student) error {
-	if !util.IsValidStudentName(student.FullName) {
+	if !utils.IsValidStudentName(student.FullName) {
 		return ErrNameFormat
 	}
 
-	if !util.IsValidStudentEmail(student.Email) {
+	if !utils.IsValidStudentEmail(student.Email) {
 		return ErrEmailFormat
 	}
 
@@ -118,11 +118,11 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 		return ErrValidDOB
 	}
 
-	if !util.IsValidClass(student.Class) {
+	if !utils.IsValidClass(student.Class) {
 		return ErrClassFormat
 	}
 
-	if !util.IsValidScores(student.Scores) {
+	if !utils.IsValidScores(student.Scores) {
 		return ErrScore
 	}
 
@@ -170,7 +170,7 @@ func (s *StudentService) GetStudentByEmail(studentEmail string) (*models.Student
 	if studentEmail == "" {
 		return nil, ErrStudentEmail
 	}
-	if !util.IsValidStudentEmail(studentEmail) {
+	if !utils.IsValidStudentEmail(studentEmail) {
 		return nil, ErrEmailFormat
 	}
 	return s.repo.GetStudentByEmail(studentEmail)
@@ -185,11 +185,11 @@ func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) 
 	}
 
 	score.Subject = strings.TrimSpace(score.Subject)
-	if !util.IsValidSubject(score.Subject) {
+	if !utils.IsValidSubject(score.Subject) {
 		return ErrSubjectFormat
 	}
 
-	if !util.IsValidSubjectScore(score.Score) {
+	if !utils.IsValidSubjectScore(score.Score) {
 		return ErrScore
 	}
 
@@ -217,11 +217,11 @@ func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScor
 	}
 
 	score.Subject = strings.TrimSpace(score.Subject)
-	if !util.IsValidSubject(score.Subject) {
+	if !utils.IsValidSubject(score.Subject) {
 		return ErrSubjectFormat
 	}
 
-	if !util.IsValidSubjectScore(score.Score) {
+	if !utils.IsValidSubjectScore(score.Score) {
 		return ErrScore
 	}
 
@@ -246,7 +246,7 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 	if err != nil {
 		return err
 	}
-	if !util.IsValidSubject(subject) {
+	if !utils.IsValidSubject(subject) {
 		return ErrSubjectFormat
 	}
 
@@ -288,7 +288,7 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 	// VALIDATE NAME
 	if filter.Name != "" {
 		filter.Name = strings.TrimSpace(filter.Name)
-		if !util.IsValidStudentName(filter.Name) {
+		if !utils.IsValidStudentName(filter.Name) {
 			return nil, ErrNameFormat
 		}
 	}
@@ -296,7 +296,7 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 	// VALIDATE CLASS
 	if filter.Class != "" {
 		filter.Class = strings.TrimSpace(filter.Class)
-		if !util.IsValidClass(filter.Class) {
+		if !utils.IsValidClass(filter.Class) {
 			return nil, ErrClassFormat
 		}
 	}
@@ -312,9 +312,9 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 
 	// VALIDATE GENDER
 	if filter.Gender != "" {
-		filter.Class = strings.TrimSpace(filter.Gender)
+		filter.Gender = strings.TrimSpace(filter.Gender)
 
-		if filter.Class != "male" && filter.Class != "female" {
+		if filter.Gender != "male" && filter.Gender != "female" {
 			return nil, ErrInvalidGender
 		}
 	}

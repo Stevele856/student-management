@@ -284,43 +284,12 @@ func matchFilter(s *models.Student, f *models.FilterStudents) bool {
 	return true
 }
 
-func CalAvgScore(scores []*models.SubjectScore) float64 {
-	if len(scores) == 0 {
-		return 0
-	}
-
-	var total float64
-	for _, s := range scores {
-		total += s.Score
-	}
-
-	return total / float64(len(scores))
-}
-
-func CalcStudentRankBaseOnAvgScore(avg float64) models.Rank {
-	switch {
-	case avg >= 9.0:
-		return models.Excellent
-	case avg >= 7.0:
-		return models.Good
-	case avg >= 5.0:
-		return models.Average
-	default:
-		return models.Weak
-	}
-}
 
 
 
 
 
-/*
-	-	Tìm học sinh có điểm TB > 8 => minScore = 8 => Điểm TB dưới 8 => loại
-	-> f.minScore > 0 && avg < f.minScore{
-			return false
-		}
-			Tìm học sinh có điểm TB < 5 => maxScore = 5 => Điểm TB lớn hơn 5 => loại
-	-> f.maxScore > 0 && avg > f.maxScore{
-			return false
-		}
-*/
+
+
+
+

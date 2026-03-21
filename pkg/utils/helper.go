@@ -1,5 +1,5 @@
 // Utils → format validation
-package util
+package utils
 
 import (
 	"net/mail"
@@ -60,4 +60,31 @@ var studentSubject = regexp.MustCompile(`^[\p{L}\s]{3,30}$`)
 func IsValidSubject(subject string) bool {
 	return studentSubject.MatchString(subject)
 
+}
+
+func CalAvgScore(scores []*models.SubjectScore) float64 {
+	if len(scores) == 0 {
+		return 0
+	}
+
+	var total float64
+	for _, s := range scores {
+		total += s.Score
+	}
+
+	return total / float64(len(scores))
+}
+
+
+func CalcStudentRankBaseOnAvgScore(avg float64) models.Rank {
+	switch {
+	case avg >= 9.0:
+		return models.Excellent
+	case avg >= 7.0:
+		return models.Good
+	case avg >= 5.0:
+		return models.Average
+	default:
+		return models.Weak
+	}
 }
