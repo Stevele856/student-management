@@ -216,27 +216,15 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*mode
 	return nil, fmt.Errorf("subject %s does not exist", subject)
 }
 
-
 // PREDICATE
 func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error) {
 	result := []*models.Student{}
 
-	for _, s := range r.students{
-		if !p(s){
+	for _, s := range r.students {
+		if !p(s) {
 			continue
 		}
 		result = append(result, s)
 	}
 	return result, nil
 }
-
-
-
-
-
-
-
-
-
-
-

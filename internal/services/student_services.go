@@ -373,9 +373,6 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 
 	return s.repo.FilterStudents(predicate.And(predicates...))
 
-	// return s.repo.FilterStudents(filter)
-	
-
 }
 
 /*
