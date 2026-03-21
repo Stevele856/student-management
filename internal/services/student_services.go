@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/predicate"
 	"github.com/student-management/internal/repositories"
 	"github.com/student-management/pkg/utils"
 )
@@ -343,7 +344,37 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 		}
 	}
 
-	return s.repo.FilterStudents(filter)
+	// PREDICATE STUDENT
+	predicates := []predicate.PredicateStudent{}
+	
+	if filter.Name != ""{
+		predicates = append(predicates, predicate.ByName(filter.Name))
+	}
+
+	if filter.Class != ""{
+		predicates = append(predicates, predicate.ByClass(filter.Class))
+	}
+
+	if filter.Gender != ""{
+		predicates = append(predicates, predicate.ByGender(filter.Gender))
+	}
+
+	if filter.Address != ""{
+		predicates = append(predicates, predicate.ByAddress(filter.Address))
+	}
+
+	if filter.MinAvgScore > 0 && filter.MaxAvgScore > 0{
+		predicates = append(predicates, predicate.ByAvgScore(filter.MinAvgScore, filter.MaxAvgScore))
+	}
+
+	if filter.StudentRank != ""{
+		predicates = append(predicates, predicate.ByRank(filter.StudentRank))
+	}
+
+	return s.repo.FilterStudents(predicate.And(predicates...))
+
+	// return s.repo.FilterStudents(filter)
+	
 
 }
 

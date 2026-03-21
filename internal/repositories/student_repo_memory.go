@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/predicate"
 )
 
 // CHECK IMPLEMENTATION FUNCTION WHETHER IT MATCH WITH INTERFACE
@@ -216,14 +217,12 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*mode
 }
 
 
-
-
-// FILTER
-func (r *InMemoStudentRepo) FilterStudents(filter *models.FilterStudents) ([]*models.Student, error) {
+// PREDICATE
+func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error) {
 	result := []*models.Student{}
 
 	for _, s := range r.students{
-		if !matchFilter(s, filter){
+		if !p(s){
 			continue
 		}
 		result = append(result, s)
@@ -231,58 +230,6 @@ func (r *InMemoStudentRepo) FilterStudents(filter *models.FilterStudents) ([]*mo
 	return result, nil
 }
 
-
-
-func matchFilter(s *models.Student, f *models.FilterStudents) bool {
-	// FILTER BY NAME
-	if f.Name != "" && !strings.Contains(strings.ToLower(s.FullName), strings.ToLower(f.Name)) {
-		return false
-	}
-
-	// FILTER BY CLASS
-	if f.Class != "" && !strings.EqualFold(s.Class, f.Class) {
-		return false
-	}
-
-	// FILTER BY YEAR
-	if f.YearOfBirth != 0 && s.DateOfBirth.Year() != f.YearOfBirth {
-		return false
-	}
-
-	// FILTER BY GENDER
-	if f.Gender != "" && !strings.EqualFold(s.Gender, f.Gender) {
-		return false
-	}
-
-	// FILTER BY ADDRESS
-	if f.Address != "" && !strings.EqualFold(s.Address, f.Address) {
-		return false
-	}
-
-	// FILTER BY AVG SCORE
-	if f.MinAvgScore > 0 || f.MaxAvgScore > 0 {
-		avg := CalAvgScore(s.Scores)
-
-		if f.MinAvgScore > 0 && avg < f.MinAvgScore {
-			return false
-		}
-
-		if f.MaxAvgScore > 0 && avg > f.MaxAvgScore {
-			return false
-		}
-
-	}
-
-	// FILTER BY STUDENT RANK
-	if f.StudentRank != "" {
-		rank := CalcStudentRankBaseOnAvgScore(CalAvgScore(s.Scores))
-
-		if f.StudentRank != rank {
-			return false
-		}
-	}
-	return true
-}
 
 
 

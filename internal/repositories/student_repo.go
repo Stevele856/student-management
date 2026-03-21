@@ -2,7 +2,10 @@
 
 package repositories
 
-import "github.com/student-management/internal/models"
+import (
+	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/predicate"
+)
 
 type StudentRepository interface {
 
@@ -22,5 +25,5 @@ type StudentRepository interface {
 	GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error)
 
 	// Filter
-	FilterStudents(filter *models.FilterStudents) ([]*models.Student, error)	
+	FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error)	
 }
