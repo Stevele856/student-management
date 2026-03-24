@@ -152,7 +152,7 @@ func (s *StudentService) DeleteStudent(studentID string) error {
 }
 
 // GET ALL STUDENT
-func (s *StudentService) GetAllStudent() ([]*models.Student, error) {
+func (s *StudentService) GetAllStudents() ([]*models.Student, error) {
 	return s.repo.GetAllStudents()
 }
 
@@ -160,7 +160,7 @@ func (s *StudentService) GetAllStudent() ([]*models.Student, error) {
 func (s *StudentService) GetStudentByID(studentID string) (*models.Student, error) {
 	studentID = strings.TrimSpace(studentID)
 	if studentID == "" {
-		return nil, ErrStudentID
+		return nil, ErrStudentID 
 	}
 	return s.repo.GetStudentByID(studentID)
 }

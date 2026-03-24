@@ -4,6 +4,7 @@ package utils
 import (
 	"net/mail"
 	"regexp"
+
 	"github.com/student-management/internal/models"
 )
 
@@ -88,3 +89,5 @@ func CalcStudentRankBaseOnAvgScore(avg float64) models.Rank {
 		return models.Weak
 	}
 }
+
+
