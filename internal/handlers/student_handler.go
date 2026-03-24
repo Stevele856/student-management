@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/student-management/internal/models"
 	"github.com/student-management/internal/services"
 )
 
@@ -62,8 +63,7 @@ func serviceErrToStatus(err error) int {
 	}
 }
 
-// GET 
-
+// GET STUDENTS
 func (h *StudentHandler) GetAllStudents(w http.ResponseWriter, r *http.Request){
 	students, err := h.service.GetAllStudents()
 
@@ -121,3 +121,40 @@ func (h *StudentHandler) GetStudentByID(w http.ResponseWriter, r *http.Request){
 	writeJSON(w, http.StatusOK, student)
 }
 
+
+// POST STUDENT
+func (h *StudentHandler) AddStudent(w http.ResponseWriter, r *http.Request){
+	student := models.Student{}
+	if err := json.NewDecoder(r.Body).Decode(&student); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	if err := h.service.AddStudent(&student); err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, &student)
+}
+
+// PUT STUDENT
+func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request){
+	id := r.PathValue("id")
+
+	student := models.Student{}
+	if err := json.NewDecoder(r.Body).Decode(&student); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	defer r.Body.Close()
+	student.ID = id
+
+	if err := h.service.UpdateStudent(&student); err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, &student)
+}
