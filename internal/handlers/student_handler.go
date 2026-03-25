@@ -169,3 +169,86 @@ func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "student delete successfully"})
 }
+
+/* -----------SCORES--------------- */
+func (h *StudentHandler) GetScoresByStudentID(w http.ResponseWriter, r *http.Request){
+	id := r.PathValue("id")
+	scores, err := h.service.GetScoresByStudentID(id)
+
+	if err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, scores)
+}
+
+func (h *StudentHandler) GetScoresBySubject(w http.ResponseWriter, r *http.Request){
+	id := r.PathValue("id")
+	subject := r.PathValue("subject")
+
+	score, err := h.service.GetScoresBySubject(id, subject)
+
+	if err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, score)
+
+}
+
+func (h *StudentHandler) AddScore(w http.ResponseWriter, r *http.Request){
+	id := r.PathValue("id")
+	
+	score := models.SubjectScore{}
+	if err := json.NewDecoder(r.Body).Decode(&score); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	if err := h.service.AddScore(id, &score); err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, &score)
+}
+
+func (h *StudentHandler) UpdateScore(w http.ResponseWriter, r *http.Request){
+	id := r.PathValue("id")
+	subject := r.PathValue("subject")
+
+	score := models.SubjectScore{}
+	if err := json.NewDecoder(r.Body).Decode(&score); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	defer r.Body.Close()
+	score.Subject = subject
+
+	if err := h.service.UpdateScore(id,&score); err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, &score)
+}
+
+func (h *StudentHandler) DeleteScore(w http.ResponseWriter, r *http.Request){
+	id := r.PathValue("id")
+	subject := r.PathValue("subject")
+
+	if err := h.service.DeleteScore(id, subject); err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "scores deleted successfully"})
+}
+
+func (h *StudentHandler) FilterStudents(w http.ResponseWriter, r *http.Request){
+	
+}

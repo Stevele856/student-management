@@ -177,6 +177,8 @@ func (s *StudentService) GetStudentByEmail(studentEmail string) (*models.Student
 	return s.repo.GetStudentByEmail(studentEmail)
 }
 
+/* ------------------------ */
+
 // ADD SUBJECT SCORE
 func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) error {
 
@@ -279,6 +281,7 @@ func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.
 	}
 
 	return s.repo.GetScoresBySubject(studentID, subject)
+
 }
 
 func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*models.Student, error) {

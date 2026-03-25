@@ -131,6 +131,8 @@ func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Stud
 	return nil, fmt.Errorf("student with Email %s does not exist", studentEmail)
 }
 
+/* --------------------------- */
+
 // IMPLEMENT CRUD SCORE
 func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScore) error {
 
@@ -216,7 +218,9 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*mode
 	return nil, fmt.Errorf("subject %s does not exist", subject)
 }
 
-// PREDICATE
+/* ------------------------- */
+
+// PREDICATE FOR FILTER
 func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error) {
 	result := []*models.Student{}
 
