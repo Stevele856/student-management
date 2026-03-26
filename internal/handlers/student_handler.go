@@ -56,7 +56,12 @@ func serviceErrToStatus(err error) int {
 		errors.Is(err, services.ErrMaxScore),
 		errors.Is(err, services.ErrIDRequired),
 		errors.Is(err, services.ErrNameRequired),
-		errors.Is(err, services.ErrStudentClass):
+		errors.Is(err, services.ErrStudentClass),
+		errors.Is(err, services.ErrInvalidYear),
+		errors.Is(err, services.ErrInvalidGender),
+		errors.Is(err, services.ErrAddressTooShort),
+		errors.Is(err, services.ErrInvalidMinMax),
+		errors.Is(err, services.ErrStudentRank):
 		return http.StatusBadRequest
 
 	default:

@@ -70,10 +70,7 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 	}
 
 	existed, err := s.repo.GetStudentByEmail(student.Email)
-	if err != nil {
-		return err
-	}
-	if existed != nil {
+	if err == nil && existed != nil  {
 		return ErrEmailExisted
 	}
 
@@ -138,15 +135,11 @@ func (s *StudentService) DeleteStudent(studentID string) error {
 		return ErrStudentID
 	}
 
-	student, err := s.repo.GetStudentByID(studentID)
+	_, err := s.repo.GetStudentByID(studentID)
 
-	if err != nil {
-		return err
-	}
-
-	if student == nil {
-		return ErrStudentNotFound
-	}
+    if err != nil {
+        return err 
+    }
 
 	return s.repo.DeleteStudent(studentID)
 }
