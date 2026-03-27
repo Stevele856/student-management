@@ -24,7 +24,7 @@ func NewStudentService(repo repositories.StudentRepository) *StudentService {
 
 // THROW ERROR
 var (
-	ErrStudentInfo   = errors.New("invalid student data")
+	ErrStudentData   = errors.New("invalid student data")
 	ErrIDRequired    = errors.New("student ID is required")
 	ErrNameFormat    = errors.New("invalid student name format")
 	ErrEmailFormat   = errors.New("invalid student email format")
@@ -56,7 +56,7 @@ var (
 // ADD STUDENT
 func (s *StudentService) AddStudent(student *models.Student) error {
 	if student == nil {
-		return ErrStudentInfo
+		return ErrStudentData
 	}
 
 	if student.ID == "" {
@@ -66,11 +66,11 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 	student.FullName = strings.TrimSpace(student.FullName)
 	student.Email = strings.ToLower(strings.TrimSpace(student.Email))
 	if student.FullName == "" || student.Email == "" {
-		return ErrStudentInfo
+		return ErrStudentData
 	}
 
 	existed, err := s.repo.GetStudentByEmail(student.Email)
-	if err == nil && existed != nil  {
+	if err == nil && existed != nil {
 		return ErrEmailExisted
 	}
 
@@ -104,6 +104,14 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 
 // UPDATE STUDENT
 func (s *StudentService) UpdateStudent(student *models.Student) error {
+	if student == nil {
+		return ErrStudentData
+	}
+
+	if student.ID == "" {
+		return ErrIDRequired
+	}
+
 	if !utils.IsValidStudentName(student.FullName) {
 		return ErrNameFormat
 	}
@@ -124,6 +132,22 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 		return ErrScore
 	}
 
+	existing, err := s.repo.GetStudentByID(student.ID)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return ErrStudentNotFound
+	}
+
+	existedEmail, err := s.repo.GetStudentByEmail(student.Email)
+	if err != nil {
+		return err
+	}
+	if existedEmail != nil && existedEmail.ID != student.ID {
+		return ErrEmailExisted
+	}
+
 	return s.repo.UpdateStudent(student)
 }
 
@@ -137,9 +161,9 @@ func (s *StudentService) DeleteStudent(studentID string) error {
 
 	_, err := s.repo.GetStudentByID(studentID)
 
-    if err != nil {
-        return err 
-    }
+	if err != nil {
+		return err
+	}
 
 	return s.repo.DeleteStudent(studentID)
 }
@@ -153,7 +177,7 @@ func (s *StudentService) GetAllStudents() ([]*models.Student, error) {
 func (s *StudentService) GetStudentByID(studentID string) (*models.Student, error) {
 	studentID = strings.TrimSpace(studentID)
 	if studentID == "" {
-		return nil, ErrStudentID 
+		return nil, ErrStudentID
 	}
 	return s.repo.GetStudentByID(studentID)
 }
@@ -342,28 +366,28 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 
 	// PREDICATE STUDENT
 	predicates := []predicate.PredicateStudent{}
-	
-	if filter.Name != ""{
+
+	if filter.Name != "" {
 		predicates = append(predicates, predicate.ByName(filter.Name))
 	}
 
-	if filter.Class != ""{
+	if filter.Class != "" {
 		predicates = append(predicates, predicate.ByClass(filter.Class))
 	}
 
-	if filter.Gender != ""{
+	if filter.Gender != "" {
 		predicates = append(predicates, predicate.ByGender(filter.Gender))
 	}
 
-	if filter.Address != ""{
+	if filter.Address != "" {
 		predicates = append(predicates, predicate.ByAddress(filter.Address))
 	}
 
-	if filter.MinAvgScore > 0 && filter.MaxAvgScore > 0{
+	if filter.MinAvgScore > 0 && filter.MaxAvgScore > 0 {
 		predicates = append(predicates, predicate.ByAvgScore(filter.MinAvgScore, filter.MaxAvgScore))
 	}
 
-	if filter.StudentRank != ""{
+	if filter.StudentRank != "" {
 		predicates = append(predicates, predicate.ByRank(filter.StudentRank))
 	}
 

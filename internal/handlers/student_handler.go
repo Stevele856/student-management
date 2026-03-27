@@ -46,7 +46,7 @@ func serviceErrToStatus(err error) int {
 		errors.Is(err, services.ErrDublicatedSubject):
 		return http.StatusConflict
 
-	case errors.Is(err, services.ErrStudentInfo),
+	case errors.Is(err, services.ErrStudentData),
 		errors.Is(err, services.ErrNameFormat),
 		errors.Is(err, services.ErrEmailFormat),
 		errors.Is(err, services.ErrClassFormat),
