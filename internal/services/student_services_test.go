@@ -1,37 +1,28 @@
 package services
 
 import (
-	"errors"
+	"testing"
+	"time"
 
 	"github.com/student-management/internal/models"
 )
 
-type MockStudentRepo struct {
-	students map[string]*models.Student
-	getByEmailFn func(email string) (*models.Student, error)
-	addStudentFn func(student *models.Student) error
-}
-
-func NewMockStudentRepo() *MockStudentRepo{
-	return &MockStudentRepo{
-		students: make(map[string]*models.Student),
-	}
-}
-
-// IMPLEMENT INTERFACES
-
-func (m *MockStudentRepo) GetStudentByEmail(email string) (*models.Student, error){
-	if m.getByEmailFn != nil {
-		return m.getByEmailFn(email)
-	}
-	return nil, errors.New("student not found")
-}
-
-func (m *MockStudentRepo) AddStudent(student *models.Student) error {
-	if m.addStudentFn != nil {
-		return m.addStudentFn(student)
+func TestAddStudent(t *testing.T) {
+	// HELPER CREATE VALID STUENT
+	validStudent := func() *models.Student {
+		return &models.Student{
+			FullName:    "Le Trong Vu",
+			DateOfBirth: time.Date(2000, 8, 31, 0, 0, 0, 0, time.UTC),
+			Gender: "male",
+			Address: "Ho Chi Minh",
+			Class: "DQT4",
+			Email: "letrongvu.work@gmail.com",
+			Scores: []*models.SubjectScore{},
+		}
 	}
 
-	m.students[student.ID] = student
-	return nil
+	// HELPER CREATE DEFAULT MOCK REPO
+	happyRepo := func () *MockStudentRepository  {
+		
+	}
 }
