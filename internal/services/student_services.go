@@ -55,18 +55,41 @@ var (
 
 // ADD STUDENT
 func (s *StudentService) AddStudent(student *models.Student) error {
+
 	if student == nil {
 		return ErrStudentData
 	}
 
-	if student.ID == "" {
-		student.ID = uuid.New().String()
-	}
-
 	student.FullName = strings.TrimSpace(student.FullName)
 	student.Email = strings.ToLower(strings.TrimSpace(student.Email))
+	student.Class = strings.TrimSpace(student.Class)
+
 	if student.FullName == "" || student.Email == "" {
 		return ErrStudentData
+	}
+
+	if !utils.IsValidStudentName(student.FullName) {
+		return ErrNameFormat
+	}
+
+	if !utils.IsValidStudentEmail(student.Email) {
+		return ErrEmailFormat
+	}
+
+	if student.DateOfBirth.After(time.Now()) {
+		return ErrValidDOB
+	}
+
+	if student.Class == "" {
+		return ErrStudentClass
+	}
+
+	if !utils.IsValidClass(student.Class) {
+		return ErrClassFormat
+	}
+
+	if !utils.IsValidScores(student.Scores) {
+		return ErrScore
 	}
 
 	existed, err := s.repo.GetStudentByEmail(student.Email)
@@ -74,29 +97,9 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 		return ErrEmailExisted
 	}
 
-	if !utils.IsValidStudentName(student.FullName) {
-		return ErrNameFormat
-	}
-
-	if !utils.IsValidStudentEmail(student.Email) {
-		return ErrEmailFormat
-	}
-
-	// VALIDATE DOB NOT IN THE FUTURE
-	if student.DateOfBirth.After(time.Now()) {
-		return ErrValidDOB
-	}
-
-	student.Class = strings.TrimSpace(student.Class)
-	if student.Class == "" {
-		return ErrStudentClass
-	}
-	if !utils.IsValidClass(student.Class) {
-		return ErrClassFormat
-	}
-
-	if !utils.IsValidScores(student.Scores) {
-		return ErrScore
+	// GEN UUID WHEN MAKE SURE THAT STUDENT WILL ADD IN DB
+	if student.ID == "" {
+		student.ID = uuid.New().String()
 	}
 
 	return s.repo.AddStudent(student)
@@ -104,12 +107,29 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 
 // UPDATE STUDENT
 func (s *StudentService) UpdateStudent(student *models.Student) error {
+
 	if student == nil {
 		return ErrStudentData
 	}
 
 	if student.ID == "" {
 		return ErrIDRequired
+	}
+	existing, err := s.repo.GetStudentByID(student.ID)
+	if err != nil {
+		return err
+	}
+
+	if existing == nil {
+		return ErrStudentNotFound
+	}
+
+	student.FullName = strings.TrimSpace(student.FullName)
+	student.Email = strings.ToLower(strings.TrimSpace(student.Email))
+	student.Class = strings.TrimSpace(student.Class)
+
+	if student.FullName == "" || student.Email == "" {
+		return ErrStudentData
 	}
 
 	if !utils.IsValidStudentName(student.FullName) {
@@ -118,26 +138,6 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 
 	if !utils.IsValidStudentEmail(student.Email) {
 		return ErrEmailFormat
-	}
-
-	if student.DateOfBirth.After(time.Now()) {
-		return ErrValidDOB
-	}
-
-	if !utils.IsValidClass(student.Class) {
-		return ErrClassFormat
-	}
-
-	if !utils.IsValidScores(student.Scores) {
-		return ErrScore
-	}
-
-	existing, err := s.repo.GetStudentByID(student.ID)
-	if err != nil {
-		return err
-	}
-	if existing == nil {
-		return ErrStudentNotFound
 	}
 
 	existedEmail, err := s.repo.GetStudentByEmail(student.Email)
@@ -146,6 +146,18 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 	}
 	if existedEmail != nil && existedEmail.ID != student.ID {
 		return ErrEmailExisted
+	}
+
+	if student.DateOfBirth.After(time.Now()) {
+		return ErrValidDOB
+	}
+
+	if !utils.IsValidClass(student.Class) {
+		return ErrClassFormat
+	}
+
+	if !utils.IsValidScores(student.Scores) {
+		return ErrScore
 	}
 
 	return s.repo.UpdateStudent(student)
@@ -159,10 +171,13 @@ func (s *StudentService) DeleteStudent(studentID string) error {
 		return ErrStudentID
 	}
 
-	_, err := s.repo.GetStudentByID(studentID)
-
+	existing, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
 		return err
+	}
+
+	if existing == nil {
+		return ErrStudentNotFound
 	}
 
 	return s.repo.DeleteStudent(studentID)
@@ -199,9 +214,13 @@ func (s *StudentService) GetStudentByEmail(studentEmail string) (*models.Student
 // ADD SUBJECT SCORE
 func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) error {
 
-	student, err := s.repo.GetStudentByID(studentID)
-	if err != nil {
-		return err
+	studentID = strings.TrimSpace(studentID)
+	if studentID == "" {
+		return ErrIDRequired
+	}
+
+	if score == nil {
+		return ErrStudentData
 	}
 
 	score.Subject = strings.TrimSpace(score.Subject)
@@ -213,13 +232,22 @@ func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) 
 		return ErrScore
 	}
 
+	student, err := s.repo.GetStudentByID(studentID)
+	if err != nil {
+		return err
+	}
+
+	if student == nil {
+		return ErrStudentNotFound
+	}
+
 	if len(student.Scores) >= 10 {
 		return ErrMaxScore
 	}
 
 	// CHECK DIBLICATE SUBJECT
-	for _, s := range student.Scores {
-		if strings.EqualFold(s.Subject, score.Subject) {
+	for _, existing := range student.Scores {
+		if strings.EqualFold(existing.Subject, score.Subject) {
 			return ErrSubjectAlreadyExisted
 		}
 	}
@@ -230,10 +258,11 @@ func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) 
 // UPDATE SCORE
 func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScore) error {
 	studentID = strings.TrimSpace(studentID)
-	_, err := s.repo.GetStudentByID(studentID)
-
-	if err != nil {
-		return err
+	if studentID == "" {
+		return ErrIDRequired
+	}
+	if score == nil {
+		return ErrStudentData
 	}
 
 	score.Subject = strings.TrimSpace(score.Subject)
@@ -243,6 +272,15 @@ func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScor
 
 	if !utils.IsValidSubjectScore(score.Score) {
 		return ErrScore
+	}
+
+	existing, err := s.repo.GetStudentByID(studentID)
+	if err != nil {
+		return err
+	}
+
+	if existing == nil {
+		return ErrStudentNotFound
 	}
 
 	return s.repo.UpdateScore(studentID, score)
@@ -261,13 +299,17 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 		return ErrSubjectEmpty
 	}
 
-	_, err := s.repo.GetStudentByID(studentID)
+	if !utils.IsValidSubject(subject) {
+		return ErrSubjectFormat
+	}
 
+	existing, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
 		return err
 	}
-	if !utils.IsValidSubject(subject) {
-		return ErrSubjectFormat
+
+	if existing == nil {
+		return ErrStudentNotFound
 	}
 
 	return s.repo.DeleteScore(studentID, subject)
@@ -279,6 +321,15 @@ func (s *StudentService) GetScoresByStudentID(studentID string) ([]*models.Subje
 
 	if studentID == "" {
 		return nil, ErrIDRequired
+	}
+
+	existing, err := s.repo.GetStudentByID(studentID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existing == nil {
+		return nil, ErrStudentNotFound
 	}
 
 	return s.repo.GetScoresByStudentID(studentID)
@@ -297,6 +348,19 @@ func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.
 		return nil, ErrSubjectEmpty
 	}
 
+	if !utils.IsValidSubject(subject) {
+		return nil, ErrSubjectFormat
+	}
+
+	existing, err := s.repo.GetStudentByID(studentID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existing == nil {
+		return nil, ErrStudentNotFound
+	}
+
 	return s.repo.GetScoresBySubject(studentID, subject)
 
 }
@@ -306,38 +370,28 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 		return s.repo.GetAllStudents()
 	}
 
+	filter.Name = strings.TrimSpace(filter.Name)
+	filter.Class = strings.TrimSpace(filter.Class)
+	filter.Gender = strings.TrimSpace(filter.Gender)
+
 	// VALIDATE NAME
-	if filter.Name != "" {
-		filter.Name = strings.TrimSpace(filter.Name)
-		if !utils.IsValidStudentName(filter.Name) {
-			return nil, ErrNameFormat
-		}
+	if filter.Name != "" && !utils.IsValidStudentName(filter.Name) {
+		return nil, ErrNameFormat
 	}
 
 	// VALIDATE CLASS
-	if filter.Class != "" {
-		filter.Class = strings.TrimSpace(filter.Class)
-		if !utils.IsValidClass(filter.Class) {
-			return nil, ErrClassFormat
-		}
+	if filter.Class != "" && !utils.IsValidClass(filter.Class) {
+		return nil, ErrClassFormat
 	}
 
 	// VALIDATE DATE OF BIRTH
-	if filter.YearOfBirth != 0 {
-		currentYear := time.Now().Year()
-
-		if filter.YearOfBirth > currentYear {
-			return nil, ErrInvalidYear
-		}
+	if filter.YearOfBirth != 0 && filter.YearOfBirth > time.Now().Year() {
+		return nil, ErrInvalidYear
 	}
 
 	// VALIDATE GENDER
-	if filter.Gender != "" {
-		filter.Gender = strings.TrimSpace(filter.Gender)
-
-		if filter.Gender != "male" && filter.Gender != "female" {
-			return nil, ErrInvalidGender
-		}
+	if filter.Gender != "" && filter.Gender != "male" && filter.Gender != "female" {
+		return nil, ErrInvalidGender
 	}
 
 	// VALIDATE ADDRESS
@@ -351,10 +405,10 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 		return nil, ErrScore
 	}
 
-	if filter.MinAvgScore > 0 && filter.MaxAvgScore > 0 &&
-		filter.MinAvgScore > filter.MaxAvgScore {
-		return nil, ErrInvalidMinMax
-	}
+    if filter.MinAvgScore > filter.MaxAvgScore &&
+        filter.MaxAvgScore != 0 {
+        return nil, ErrInvalidMinMax
+    }
 
 	// VALIDATE STUDENT RANK
 	if filter.StudentRank != "" {
