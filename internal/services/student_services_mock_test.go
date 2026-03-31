@@ -1,4 +1,4 @@
-package services
+package services_test
 
 import (
 	"github.com/student-management/internal/models"
@@ -62,14 +62,14 @@ func (m *MockStudentRepository) DeleteScore(studentID, subject string) error {
 	return m.DeleteScoreFn(studentID,subject)
 }
 
-func (m *MockStudentRepository) GetScoreByStudentID(studentID string) ([]*models.SubjectScore, error){
+func (m *MockStudentRepository) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error){
 	return m.GetScoreByStudentIDFn(studentID)
 }
 
-func (m *MockStudentRepository) GetScoreBySubject(studentID, subject string) (*models.SubjectScore, error){
+func (m *MockStudentRepository) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error){
 	return m.GetScoreBySubjectFn(studentID, subject)
 }
 
-func (m *MockStudentRepository) FilterStudent(p predicate.PredicateStudent) ([]*models.Student, error){
+func (m *MockStudentRepository) FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error){
 	return m.FilterStudentFn(p)
 }
