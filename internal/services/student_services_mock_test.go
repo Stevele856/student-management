@@ -19,10 +19,10 @@ type MockStudentRepository struct {
 	AddScoreFn            func(studentID string, score *models.SubjectScore) error
 	UpdateScoreFn         func(studentID string, score *models.SubjectScore) error
 	DeleteScoreFn         func(studentID, subject string) error
-	GetScoreByStudentIDFn func(studentID string) ([]*models.SubjectScore, error)
-	GetScoreBySubjectFn   func(studentID, subject string) (*models.SubjectScore, error)
+	GetScoresByStudentIDFn func(studentID string) ([]*models.SubjectScore, error)
+	GetScoresBySubjectFn   func(studentID, subject string) (*models.SubjectScore, error)
 
-	FilterStudentFn func(p predicate.PredicateStudent) ([]*models.Student, error)
+	FilterStudentsFn func(p predicate.PredicateStudent) ([]*models.Student, error)
 }
 
 /*-------IMPLEMENT INTERFACE ------- */
@@ -63,13 +63,13 @@ func (m *MockStudentRepository) DeleteScore(studentID, subject string) error {
 }
 
 func (m *MockStudentRepository) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error){
-	return m.GetScoreByStudentIDFn(studentID)
+	return m.GetScoresByStudentIDFn(studentID)
 }
 
 func (m *MockStudentRepository) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error){
-	return m.GetScoreBySubjectFn(studentID, subject)
+	return m.GetScoresBySubjectFn(studentID, subject)
 }
 
 func (m *MockStudentRepository) FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error){
-	return m.FilterStudentFn(p)
+	return m.FilterStudentsFn(p)
 }

@@ -2,10 +2,12 @@ package services_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/predicate"
 	"github.com/student-management/internal/services"
 )
 
@@ -666,6 +668,1277 @@ func TestUpdateStudent(t *testing.T) {
 			if tc.expectedErr == nil {
 				if err != nil {
 					t.Errorf("expected no error, got: %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("expected error [%v], got nil", tc.expectedErr)
+					return
+				}
+				if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+					t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+				}
+			}
+		})
+	}
+}
+
+func TestDeleteStudent(t *testing.T) {
+
+    // ── Helper 
+    happyRepo := func() *MockStudentRepository {
+        return &MockStudentRepository{
+            GetStudentByIDFn: func(id string) (*models.Student, error) {
+                return &models.Student{ID: id}, nil // existed
+            },
+            DeleteStudentFn: func(id string) error {
+                return nil // delete succesfully
+            },
+        }
+    }
+
+    tests := []struct {
+        name        string
+        input       string // studentID (different with AddStudent and UpdateStudent)
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        // ── HAPPY PATH 
+        {
+            name:        "success - delete succesfully",
+            input:       "existing-id-123",
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name:        "success - ID has trim space",
+            input:       "  existing-id-123  ", // service TrimSpace
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+
+        // ── EMPTY INPUT 
+        {
+            name:        "fail - empty ID",
+            input:       "",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentID,
+        },
+        {
+            name:        "fail - ID has only space",
+            input:       "   ",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentID,
+        },
+
+        // ── REPO CASES 
+        {
+            name:  "fail - student not existing",
+            input: "non-existing-id",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, nil // not found
+                    },
+                }
+            },
+            expectedErr: services.ErrStudentNotFound,
+        },
+        {
+            name:  "fail - repo.GetStudentByID DB error",
+            input: "existing-id-123",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+        {
+            name:  "fail - repo.DeleteStudent DB error",
+            input: "existing-id-123",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{ID: id}, nil
+                    },
+                    DeleteStudentFn: func(id string) error {
+                        return errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    // ── Run loop 
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            err := svc.DeleteStudent(tc.input)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+
+
+func TestGetAllStudents(t *testing.T) {
+    tests := []struct {
+        name        string
+        setupRepo   func() *MockStudentRepository
+        expected    []*models.Student
+        expectedErr error
+    }{
+        {
+            name: "success - return list of students",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetAllStudentsFn: func() ([]*models.Student, error) {
+                        return []*models.Student{
+                            {ID: "1", FullName: "Le Trong Vu"},
+                            {ID: "2", FullName: "Jenifer"},
+                        }, nil
+                    },
+                }
+            },
+            expected: []*models.Student{
+                {ID: "1", FullName: "Le Trong Vu"},
+                {ID: "2", FullName: "Jenifer"},
+            },
+            expectedErr: nil,
+        },
+        {
+            name: "success - return empty list",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetAllStudentsFn: func() ([]*models.Student, error) {
+                        return []*models.Student{}, nil
+                    },
+                }
+            },
+            expected:    []*models.Student{},
+            expectedErr: nil,
+        },
+        {
+            name: "fail - repo returns db error",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetAllStudentsFn: func() ([]*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expected:    nil,
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            result, err := svc.GetAllStudents()
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+                if len(result) != len(tc.expected) {
+                    t.Errorf("expected %d students, got %d", len(tc.expected), len(result))
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestGetStudentByID(t *testing.T) {
+    tests := []struct {
+        name        string
+        input       string
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        {
+            name:  "success - student found",
+            input: "existing-id-123",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{ID: id}, nil
+                    },
+                }
+            },
+            expectedErr: nil,
+        },
+        {
+            name:        "fail - empty ID",
+            input:       "",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentID,
+        },
+        {
+            name:        "fail - whitespace only ID",
+            input:       "   ",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentID,
+        },
+        {
+            name:  "fail - repo returns db error",
+            input: "existing-id-123",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            _, err := svc.GetStudentByID(tc.input)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+func TestGetStudentByEmail(t *testing.T) {
+    tests := []struct {
+        name        string
+        input       string
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        {
+            name:  "success - student found",
+            input: "letrongvu.work@gmail.com",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByEmailFn: func(email string) (*models.Student, error) {
+                        return &models.Student{Email: email}, nil
+                    },
+                }
+            },
+            expectedErr: nil,
+        },
+        {
+            name:        "fail - empty email",
+            input:       "",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentEmail,
+        },
+        {
+            name:        "fail - whitespace only email",
+            input:       "   ",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentEmail,
+        },
+        {
+            name:        "fail - invalid email format",
+            input:       "not-an-email",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrEmailFormat,
+        },
+        {
+            name:  "fail - repo returns db error",
+            input: "letrongvu.work@gmail.com",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByEmailFn: func(email string) (*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            _, err := svc.GetStudentByEmail(tc.input)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+func TestAddScore(t *testing.T) {
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+    validScore := func() *models.SubjectScore {
+        return &models.SubjectScore{
+            Subject: "Math",
+            Score:   8.5,
+        }
+    }
+
+    happyRepo := func() *MockStudentRepository {
+        return &MockStudentRepository{
+            GetStudentByIDFn: func(id string) (*models.Student, error) {
+                return &models.Student{
+                    ID:     id,
+                    Scores: []*models.SubjectScore{}, // chưa có môn nào
+                }, nil
+            },
+            AddScoreFn: func(id string, score *models.SubjectScore) error {
+                return nil
+            },
+        }
+    }
+
+    tests := []struct {
+        name        string
+        inputID     string
+        inputScore  *models.SubjectScore
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        // ── HAPPY PATH ────────────────────────────────────────────────────
+        {
+            name:        "success - valid score",
+            inputID:     "existing-id-123",
+            inputScore:  validScore(),
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name:    "success - score is 0",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "Math",
+                Score:   0, // 0 là hợp lệ
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name:    "success - score is 10",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "Math",
+                Score:   10, // 10 là hợp lệ
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+
+        // ── EMPTY / NIL INPUT ─────────────────────────────────────────────
+        {
+            name:        "fail - empty student ID",
+            inputID:     "",
+            inputScore:  validScore(),
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrIDRequired,
+        },
+        {
+            name:        "fail - whitespace only student ID",
+            inputID:     "   ",
+            inputScore:  validScore(),
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrIDRequired,
+        },
+        {
+            name:        "fail - score is nil",
+            inputID:     "existing-id-123",
+            inputScore:  nil,
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentData,
+        },
+
+        // ── SUBJECT VALIDATION ────────────────────────────────────────────
+        {
+            name:    "fail - empty subject",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "",
+                Score:   8.5,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrSubjectFormat,
+        },
+        {
+            name:    "fail - invalid subject format",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "Math@#$",
+                Score:   8.5,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrSubjectFormat,
+        },
+
+        // ── SCORE VALIDATION ──────────────────────────────────────────────
+        {
+            name:    "fail - score below 0",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "Math",
+                Score:   -1,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrScore,
+        },
+        {
+            name:    "fail - score above 10",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "Math",
+                Score:   11,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrScore,
+        },
+
+        // ── BUSINESS RULES ────────────────────────────────────────────────
+        {
+            name:       "fail - student not found",
+            inputID:    "non-existing-id",
+            inputScore: validScore(),
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrStudentNotFound,
+        },
+        {
+            name:       "fail - max 10 scores reached",
+            inputID:    "existing-id-123",
+            inputScore: validScore(),
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        // student đã có đủ 10 môn
+                        scores := make([]*models.SubjectScore, 10)
+                        for i := range scores {
+                            scores[i] = &models.SubjectScore{
+                                Subject: fmt.Sprintf("Subject%d", i),
+                                Score:   8,
+                            }
+                        }
+                        return &models.Student{ID: id, Scores: scores}, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrMaxScore,
+        },
+        {
+            name:       "fail - duplicate subject",
+            inputID:    "existing-id-123",
+            inputScore: validScore(), // Subject: "Math"
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{
+                            ID: id,
+                            Scores: []*models.SubjectScore{
+                                {Subject: "Math", Score: 9}, // đã có Math rồi
+                            },
+                        }, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrSubjectAlreadyExisted,
+        },
+        {
+            name:       "fail - duplicate subject case insensitive",
+            inputID:    "existing-id-123",
+            inputScore: &models.SubjectScore{Subject: "MATH", Score: 8}, // MATH == math
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{
+                            ID: id,
+                            Scores: []*models.SubjectScore{
+                                {Subject: "math", Score: 9},
+                            },
+                        }, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrSubjectAlreadyExisted,
+        },
+
+        // ── REPO ERROR ────────────────────────────────────────────────────
+        {
+            name:       "fail - repo.GetStudentByID db error",
+            inputID:    "existing-id-123",
+            inputScore: validScore(),
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+        {
+            name:       "fail - repo.AddScore db error",
+            inputID:    "existing-id-123",
+            inputScore: validScore(),
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{
+                            ID:     id,
+                            Scores: []*models.SubjectScore{},
+                        }, nil
+                    },
+                    AddScoreFn: func(id string, score *models.SubjectScore) error {
+                        return errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            err := svc.AddScore(tc.inputID, tc.inputScore)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+func TestUpdateScore(t *testing.T) {
+
+    validScore := func() *models.SubjectScore {
+        return &models.SubjectScore{Subject: "Math", Score: 9}
+    }
+
+    happyRepo := func() *MockStudentRepository {
+        return &MockStudentRepository{
+            GetStudentByIDFn: func(id string) (*models.Student, error) {
+                return &models.Student{ID: id}, nil
+            },
+            UpdateScoreFn: func(id string, score *models.SubjectScore) error {
+                return nil
+            },
+        }
+    }
+
+    tests := []struct {
+        name        string
+        inputID     string
+        inputScore  *models.SubjectScore
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        // ── HAPPY PATH ────────────────────────────────────────────────────
+        {
+            name:        "success - valid score update",
+            inputID:     "existing-id-123",
+            inputScore:  validScore(),
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+
+        // ── EMPTY / NIL INPUT ─────────────────────────────────────────────
+        {
+            name:        "fail - empty student ID",
+            inputID:     "",
+            inputScore:  validScore(),
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrIDRequired,
+        },
+        {
+            name:        "fail - score is nil",
+            inputID:     "existing-id-123",
+            inputScore:  nil,
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentData,
+        },
+
+        // ── VALIDATION ────────────────────────────────────────────────────
+        {
+            name:    "fail - invalid subject format",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "Math@#$",
+                Score:   8,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrSubjectFormat,
+        },
+        {
+            name:    "fail - score above 10",
+            inputID: "existing-id-123",
+            inputScore: &models.SubjectScore{
+                Subject: "Math",
+                Score:   11,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrScore,
+        },
+
+        // ── REPO ERROR ────────────────────────────────────────────────────
+        {
+            name:       "fail - student not found",
+            inputID:    "non-existing-id",
+            inputScore: validScore(),
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrStudentNotFound,
+        },
+        {
+            name:       "fail - repo.UpdateScore db error",
+            inputID:    "existing-id-123",
+            inputScore: validScore(),
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{ID: id}, nil
+                    },
+                    UpdateScoreFn: func(id string, score *models.SubjectScore) error {
+                        return errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            err := svc.UpdateScore(tc.inputID, tc.inputScore)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+func TestDeleteScore(t *testing.T) {
+
+    happyRepo := func() *MockStudentRepository {
+        return &MockStudentRepository{
+            GetStudentByIDFn: func(id string) (*models.Student, error) {
+                return &models.Student{ID: id}, nil
+            },
+            DeleteScoreFn: func(id, subject string) error {
+                return nil
+            },
+        }
+    }
+
+    tests := []struct {
+        name        string
+        inputID     string
+        inputSubject string
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        // ── HAPPY PATH ────────────────────────────────────────────────────
+        {
+            name:         "success - valid delete",
+            inputID:      "existing-id-123",
+            inputSubject: "Math",
+            setupRepo:    happyRepo,
+            expectedErr:  nil,
+        },
+
+        // ── EMPTY INPUT ───────────────────────────────────────────────────
+        {
+            name:         "fail - empty student ID",
+            inputID:      "",
+            inputSubject: "Math",
+            setupRepo:    func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr:  services.ErrIDRequired,
+        },
+        {
+            name:         "fail - empty subject",
+            inputID:      "existing-id-123",
+            inputSubject: "",
+            setupRepo:    func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr:  services.ErrSubjectEmpty,
+        },
+        {
+            name:         "fail - invalid subject format",
+            inputID:      "existing-id-123",
+            inputSubject: "Math@#$",
+            setupRepo:    func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr:  services.ErrSubjectFormat,
+        },
+
+        // ── REPO CASES ────────────────────────────────────────────────────
+        {
+            name:         "fail - student not found",
+            inputID:      "non-existing-id",
+            inputSubject: "Math",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrStudentNotFound,
+        },
+        {
+            name:         "fail - repo.DeleteScore db error",
+            inputID:      "existing-id-123",
+            inputSubject: "Math",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{ID: id}, nil
+                    },
+                    DeleteScoreFn: func(id, subject string) error {
+                        return errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            err := svc.DeleteScore(tc.inputID, tc.inputSubject)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+func TestGetScoresByStudentID(t *testing.T) {
+    tests := []struct {
+        name        string
+        input       string
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        {
+            name:  "success - scores found",
+            input: "existing-id-123",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{ID: id}, nil
+                    },
+                    GetScoresByStudentIDFn: func(id string) ([]*models.SubjectScore, error) {
+                        return []*models.SubjectScore{
+                            {Subject: "Math", Score: 8},
+                        }, nil
+                    },
+                }
+            },
+            expectedErr: nil,
+        },
+        {
+            name:        "fail - empty student ID",
+            input:       "",
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrIDRequired,
+        },
+        {
+            name:  "fail - student not found",
+            input: "non-existing-id",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrStudentNotFound,
+        },
+        {
+            name:  "fail - repo db error",
+            input: "existing-id-123",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            _, err := svc.GetScoresByStudentID(tc.input)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestGetScoresBySubject(t *testing.T) {
+    tests := []struct {
+        name         string
+        inputID      string
+        inputSubject string
+        setupRepo    func() *MockStudentRepository
+        expectedErr  error
+    }{
+        {
+            name:         "success - score found",
+            inputID:      "existing-id-123",
+            inputSubject: "Math",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return &models.Student{ID: id}, nil
+                    },
+                    GetScoresBySubjectFn: func(id, subject string) (*models.SubjectScore, error) {
+                        return &models.SubjectScore{Subject: subject, Score: 8}, nil
+                    },
+                }
+            },
+            expectedErr: nil,
+        },
+        {
+            name:         "fail - empty student ID",
+            inputID:      "",
+            inputSubject: "Math",
+            setupRepo:    func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr:  services.ErrIDRequired,
+        },
+        {
+            name:         "fail - empty subject",
+            inputID:      "existing-id-123",
+            inputSubject: "",
+            setupRepo:    func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr:  services.ErrSubjectEmpty,
+        },
+        {
+            name:         "fail - invalid subject format",
+            inputID:      "existing-id-123",
+            inputSubject: "Math@#$",
+            setupRepo:    func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr:  services.ErrSubjectFormat,
+        },
+        {
+            name:         "fail - student not found",
+            inputID:      "non-existing-id",
+            inputSubject: "Math",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, nil
+                    },
+                }
+            },
+            expectedErr: services.ErrStudentNotFound,
+        },
+        {
+            name:         "fail - repo db error",
+            inputID:      "existing-id-123",
+            inputSubject: "Math",
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetStudentByIDFn: func(id string) (*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            _, err := svc.GetScoresBySubject(tc.inputID, tc.inputSubject)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
+}
+
+func TestFilterStudents(t *testing.T) {
+	// ── Helper ─────────────────────────────────────────────────────────────
+	validFilter := func() *models.FilterStudents {
+		return &models.FilterStudents{
+			Name:        "",
+			Class:       "",
+			YearOfBirth: 0,
+			Gender:      "",
+			Address:     "",
+			MinAvgScore: 0,
+			MaxAvgScore: 10,
+			StudentRank: "",
+		}
+	}
+
+	// Sample students 
+	sampleStudents := []*models.Student{
+		{
+			ID:          "1",
+			FullName:    "Le Trong Vu",
+			DateOfBirth: time.Date(2005, 5, 15, 0, 0, 0, 0, time.UTC),
+			Gender:      "male",
+			Address:     "Ho Chi Minh",
+			Class:       "DQT4",
+			Scores:      []*models.SubjectScore{{Subject: "Toan", Score: 8.5}, {Subject: "Van", Score: 7.0}},
+		},
+		{
+			ID:          "2",
+			FullName:    "Nguyen Thi Lan",
+			DateOfBirth: time.Date(2006, 3, 20, 0, 0, 0, 0, time.UTC),
+			Gender:      "female",
+			Address:     "Ha Noi",
+			Class:       "DQT4",
+			Scores:      []*models.SubjectScore{{Subject: "Toan", Score: 9.2}, {Subject: "Ly", Score: 8.5}},
+		},
+		{
+			ID:          "3",
+			FullName:    "Tran Van An",
+			DateOfBirth: time.Date(2005, 11, 10, 0, 0, 0, 0, time.UTC),
+			Gender:      "male",
+			Address:     "Ho Chi Minh",
+			Class:       "DQT5",
+			Scores:      []*models.SubjectScore{{Subject: "Toan", Score: 6.5}, {Subject: "Hoa", Score: 7.0}},
+		},
+	}
+
+	happyRepo := func() *MockStudentRepository {
+		return &MockStudentRepository{
+			FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+				return sampleStudents, nil
+			},
+		}
+	}
+
+	tests := []struct {
+		name        string
+		input       *models.FilterStudents
+		setupRepo   func() *MockStudentRepository
+		expectedLen int
+		expectedErr error
+	}{
+		/* ── HAPPY PATH ───────────────────────────────────────────────── */
+		{
+			name:        "success - no filter (return all)",
+			input:       validFilter(),
+			setupRepo:   happyRepo,
+			expectedLen: 3,
+			expectedErr: nil,
+		},
+		{
+			name: "success - filter by Name (partial match)",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.Name = "Trong Vu"
+				return f
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						return []*models.Student{sampleStudents[0]}, nil
+					},
+				}
+			},
+			expectedLen: 1,
+			expectedErr: nil,
+		},
+		{
+			name: "success - filter by Class",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.Class = "DQT4"
+				return f
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						return []*models.Student{sampleStudents[0], sampleStudents[1]}, nil
+					},
+				}
+			},
+			expectedLen: 2,
+			expectedErr: nil,
+		},
+		{
+			name: "success - filter by YearOfBirth",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.YearOfBirth = 2005
+				return f
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						return []*models.Student{sampleStudents[0], sampleStudents[2]}, nil
+					},
+				}
+			},
+			expectedLen: 2,
+			expectedErr: nil,
+		},
+		{
+			name: "success - filter by Gender",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.Gender = "female"
+				return f
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						return []*models.Student{sampleStudents[1]}, nil
+					},
+				}
+			},
+			expectedLen: 1,
+			expectedErr: nil,
+		},
+		{
+			name: "success - filter by Address",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.Address = "Ho Chi Minh"
+				return f
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						return []*models.Student{sampleStudents[0], sampleStudents[2]}, nil
+					},
+				}
+			},
+			expectedLen: 2,
+			expectedErr: nil,
+		},
+		{
+			name: "success - filter by MinAvgScore and MaxAvgScore",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.MinAvgScore = 8.0
+				f.MaxAvgScore = 9.5
+				return f
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						// chỉ trả về student có điểm trung bình trong khoảng
+						return []*models.Student{sampleStudents[0], sampleStudents[1]}, nil
+					},
+				}
+			},
+			expectedLen: 2,
+			expectedErr: nil,
+		},
+		{
+			name: "success - filter by StudentRank",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.StudentRank = "Excellent" // hoặc giá trị Rank bạn đang dùng
+				return f
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						return []*models.Student{sampleStudents[1]}, nil
+					},
+				}
+			},
+			expectedLen: 1,
+			expectedErr: nil,
+		},
+
+		/* ── INVALID INPUT ─────────────────────────────────────────────── */
+		{
+			name:        "fail - filter is nil",
+			input:       nil,
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedLen: 0,
+			expectedErr: services.ErrStudentData, // hoặc ErrInvalidFilter nếu bạn có
+		},
+		{
+			name: "fail - invalid MinAvgScore > MaxAvgScore",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.MinAvgScore = 9.0
+				f.MaxAvgScore = 5.0
+				return f
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedLen: 0,
+			expectedErr: services.ErrStudentData, // nếu bạn có error này, còn không thì dùng ErrStudentData
+		},
+		{
+			name: "fail - invalid Gender",
+			input: func() *models.FilterStudents {
+				f := validFilter()
+				f.Gender = "unknown"
+				return f
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedLen: 0,
+			expectedErr: services.ErrInvalidGender, // tùy bạn có định nghĩa hay không
+		},
+
+		/* ── REPO ERROR ────────────────────────────────────────────────── */
+		{
+			name:  "fail - repo returns database error",
+			input: validFilter(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+						return nil, errors.New("db connection failed")
+					},
+				}
+			},
+			expectedLen: 0,
+			expectedErr: errors.New("db connection failed"),
+		},
+	}
+
+	// ── Run test cases ─────────────────────────────────────────────────────
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := services.NewStudentService(tc.setupRepo())
+
+			result, err := svc.FilterStudents(tc.input)
+
+			if tc.expectedErr == nil {
+				if err != nil {
+					t.Errorf("expected no error, got: %v", err)
+					return
+				}
+				if len(result) != tc.expectedLen {
+					t.Errorf("expected %d students, got %d", tc.expectedLen, len(result))
 				}
 			} else {
 				if err == nil {
