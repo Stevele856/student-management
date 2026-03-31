@@ -356,10 +356,10 @@ func TestAddStudent(t *testing.T) {
 	}
 }
 
-// SEPERATE GENERATE ID - NEED CHECK STRUCT STATE AFTER CALLED, NOT ONLY CHECK ERROR
+// SEPERATED GENERATE ID - NEED CHECK STRUCT STATE AFTER CALLED, NOT ONLY CHECK ERROR
 func TestAddStudent_AutoGenerateID(t *testing.T) {
 	student := &models.Student{
-		ID: "",
+		ID:          "",
 		FullName:    "Le Trong Vu",
 		DateOfBirth: time.Date(2000, 8, 31, 0, 0, 0, 0, time.UTC),
 		Gender:      "male",
@@ -385,9 +385,298 @@ func TestAddStudent_AutoGenerateID(t *testing.T) {
 		t.Fatalf("expected no error, got: %v", err)
 	}
 
-	// After call AddStudent, auto generate ID 
+	// After call AddStudent, auto generate ID
 	if student.ID == "" {
 		t.Error("expected ID to be auto-generated, got empty string")
+	}
+}
+
+func TestUpdateStudent(t *testing.T) {
+	validStudent := func() *models.Student {
+		return &models.Student{
+			ID:          "existing-id-123",
+			FullName:    "Le Trong Vu",
+			DateOfBirth: time.Date(2000, 8, 31, 0, 0, 0, 0, time.UTC),
+			Gender:      "male",
+			Address:     "Ho Chi Minh",
+			Class:       "DQT4",
+			Email:       "letrongvu.work@gmail.com",
+			Scores:      []*models.SubjectScore{},
+		}
+	}
+	// HAPPY REPO - EXISTED STUDENT, EMAIL NOT BEING USED BY OTHERS
+	happyRepo := func() *MockStudentRepository {
+		return &MockStudentRepository{
+			GetStudentByIDFn: func(studentID string) (*models.Student, error) {
+				return &models.Student{ID: studentID}, nil
+			},
+			GetStudentByEmailFn: func(studentEmail string) (*models.Student, error) {
+				return nil, errors.New("not found") // Email not being used
+			},
+			UpdateStudentFn: func(student *models.Student) error {
+				return nil // update succesfully
+			},
+		}
+	}
+
+	tests := []struct {
+		name        string
+		input       *models.Student
+		setupRepo   func() *MockStudentRepository
+		expectedErr error
+	}{
+		/* ----- HAPPY PATH ----- */
+		{
+			name:        "success - valid student",
+			input:       validStudent(),
+			setupRepo:   happyRepo,
+			expectedErr: nil,
+		},
+		{
+			name:  "success - same email with student is updating",
+			input: validStudent(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					GetStudentByIDFn: func(id string) (*models.Student, error) {
+						return &models.Student{ID: id}, nil
+					},
+					GetStudentByEmailFn: func(email string) (*models.Student, error) {
+						// return that student
+						return &models.Student{
+							ID:    "existing-id-123",
+							Email: email,
+						}, nil
+					},
+					UpdateStudentFn: func(s *models.Student) error {
+						return nil
+					},
+				}
+			},
+			expectedErr: nil,
+		},
+		/* ----- NULL/ EMPTY ----- */
+		{
+			name:        "fail - student nil",
+			input:       nil,
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrStudentData,
+		},
+		// CASE 1: EMPTY ID
+		{
+			name: "fail - empty ID",
+			input: func() *models.Student {
+				s := validStudent()
+				s.ID = ""
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrIDRequired,
+		},
+		// CASE 2: EMPTY FULLNAME
+		{
+			name: "fail - Empty FullName",
+			input: func() *models.Student {
+				s := validStudent()
+				s.FullName = ""
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrStudentData,
+		},
+		// CASE 3: EMPTY EMAIL
+		{
+			name: "fail - Empty Email",
+			input: func() *models.Student {
+				s := validStudent()
+				s.Email = ""
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrStudentData,
+		},
+		/* ----- FORMAT VALIDATION ----- */
+
+		// CASE 1: WRONG NAME FORMAT
+		{
+			name: "fail - incorrect name format",
+			input: func() *models.Student {
+				s := validStudent()
+				s.FullName = "Le@Trong#Vu"
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrNameFormat,
+		},
+		// CASE 2: WRONG EMAIL FORMAT
+		{
+			name: "fail - wroincorrectng email format",
+			input: func() *models.Student {
+				s := validStudent()
+				s.Email = "not-an-email"
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrEmailFormat,
+		},
+		// CASE 3: DOB IN FUTURE
+		{
+			name: "fail - DOB IN FUTURE",
+			input: func() *models.Student {
+				s := validStudent()
+				s.DateOfBirth = time.Now().Add(24 * time.Hour)
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrValidDOB,
+		},
+		// CASE 4: DOB IN FUTURE (NEXT HOUR)
+		{
+			name: "fail - DOB IN FUTURE (NEXT HOUR)",
+			input: func() *models.Student {
+				s := validStudent()
+				s.DateOfBirth = time.Now().Add(time.Hour)
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrValidDOB,
+		},
+		// CASE 5: EMPTY CLASS
+		{
+			name: "fail - empty class",
+			input: func() *models.Student {
+				s := validStudent()
+				s.Class = ""
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrStudentClass,
+		},
+		// CASE 6: WRONG CLASS FORMAT
+		{
+			name: "fail -  incorrect class format",
+			input: func() *models.Student {
+				s := validStudent()
+				s.Class = "INVALID!!!"
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrClassFormat,
+		},
+		// CASE 7: SCORE NEGATIVE
+		{
+			name: "fail - negative score",
+			input: func() *models.Student {
+				s := validStudent()
+				s.Scores = []*models.SubjectScore{
+					{Subject: "Math", Score: -5},
+				}
+				return s
+			}(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{}
+			},
+			expectedErr: services.ErrScore,
+		},
+		// CASE 8: SCORE GREATER THAN 10
+		{
+			name: "fail - score greater than 10",
+			input: func() *models.Student {
+				s := validStudent()
+				s.Scores = []*models.SubjectScore{{Subject: "Math", Score: 11}}
+				return s
+			}(),
+			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+			expectedErr: services.ErrScore,
+		},
+
+		/* ------ REPO CASES ------- */
+
+		{
+			name:  "fail - student does not existed",
+			input: validStudent(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					GetStudentByIDFn: func(id string) (*models.Student, error) {
+						return nil, nil // not found
+					},
+				}
+			},
+			expectedErr: services.ErrStudentNotFound,
+		},
+		{
+			name:  "fail - email dublicated by others student",
+			input: validStudent(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					GetStudentByIDFn: func(id string) (*models.Student, error) {
+						return &models.Student{ID: id}, nil
+					},
+					GetStudentByEmailFn: func(email string) (*models.Student, error) {
+						// return student using this email
+						return &models.Student{
+							ID:    "another-id-999",
+							Email: email,
+						}, nil
+					},
+				}
+			},
+			expectedErr: services.ErrEmailExisted,
+		},
+		/*------- REPO ERROR ----- */
+		// CASE 1: REPO GetStudentByID
+		{
+			name:  "fail - repo.GetStudentByID error DB",
+			input: validStudent(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					GetStudentByIDFn: func(id string) (*models.Student, error) {
+						return nil, errors.New("db connection failed")
+					},
+				}
+			},
+			expectedErr: errors.New("db connection failed"),
+		},
+		// CASE 2: REPO UpdateStudent
+		{
+			name:  "fail - repo.UpdateStudent error DB",
+			input: validStudent(),
+			setupRepo: func() *MockStudentRepository {
+				return &MockStudentRepository{
+					GetStudentByIDFn: func(id string) (*models.Student, error) {
+						return &models.Student{ID: id}, nil
+					},
+					GetStudentByEmailFn: func(email string) (*models.Student, error) {
+						return nil, errors.New("not found")
+					},
+					UpdateStudentFn: func(s *models.Student) error {
+						return errors.New("db connection failed")
+					},
+				}
+			},
+			expectedErr: errors.New("db connection failed"),
+		},
+	}
+	// ── Run loop 
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := services.NewStudentService(tc.setupRepo())
+
+			err := svc.UpdateStudent(tc.input)
+
+			if tc.expectedErr == nil {
+				if err != nil {
+					t.Errorf("expected no error, got: %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("expected error [%v], got nil", tc.expectedErr)
+					return
+				}
+				if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+					t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+				}
+			}
+		})
 	}
 }
 
