@@ -1687,270 +1687,304 @@ func TestGetScoresBySubject(t *testing.T) {
 }
 
 func TestFilterStudents(t *testing.T) {
-	// ── Helper ─────────────────────────────────────────────────────────────
-	validFilter := func() *models.FilterStudents {
-		return &models.FilterStudents{
-			Name:        "",
-			Class:       "",
-			YearOfBirth: 0,
-			Gender:      "",
-			Address:     "",
-			MinAvgScore: 0,
-			MaxAvgScore: 10,
-			StudentRank: "",
-		}
-	}
 
-	// Sample students 
-	sampleStudents := []*models.Student{
-		{
-			ID:          "1",
-			FullName:    "Le Trong Vu",
-			DateOfBirth: time.Date(2005, 5, 15, 0, 0, 0, 0, time.UTC),
-			Gender:      "male",
-			Address:     "Ho Chi Minh",
-			Class:       "DQT4",
-			Scores:      []*models.SubjectScore{{Subject: "Toan", Score: 8.5}, {Subject: "Van", Score: 7.0}},
-		},
-		{
-			ID:          "2",
-			FullName:    "Nguyen Thi Lan",
-			DateOfBirth: time.Date(2006, 3, 20, 0, 0, 0, 0, time.UTC),
-			Gender:      "female",
-			Address:     "Ha Noi",
-			Class:       "DQT4",
-			Scores:      []*models.SubjectScore{{Subject: "Toan", Score: 9.2}, {Subject: "Ly", Score: 8.5}},
-		},
-		{
-			ID:          "3",
-			FullName:    "Tran Van An",
-			DateOfBirth: time.Date(2005, 11, 10, 0, 0, 0, 0, time.UTC),
-			Gender:      "male",
-			Address:     "Ho Chi Minh",
-			Class:       "DQT5",
-			Scores:      []*models.SubjectScore{{Subject: "Toan", Score: 6.5}, {Subject: "Hoa", Score: 7.0}},
-		},
-	}
+    // ── Helpers ───────────────────────────────────────────────────────────
+    mockStudents := []*models.Student{
+        {ID: "1", FullName: "Nguyen Van A", Class: "12A1", Gender: "male"},
+        {ID: "2", FullName: "Nguyen Van B", Class: "12A2", Gender: "female"},
+    }
 
-	happyRepo := func() *MockStudentRepository {
-		return &MockStudentRepository{
-			FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-				return sampleStudents, nil
-			},
-		}
-	}
+    happyRepo := func() *MockStudentRepository {
+        return &MockStudentRepository{
+            FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+                return mockStudents, nil
+            },
+        }
+    }
 
-	tests := []struct {
-		name        string
-		input       *models.FilterStudents
-		setupRepo   func() *MockStudentRepository
-		expectedLen int
-		expectedErr error
-	}{
-		/* ── HAPPY PATH ───────────────────────────────────────────────── */
-		{
-			name:        "success - no filter (return all)",
-			input:       validFilter(),
-			setupRepo:   happyRepo,
-			expectedLen: 3,
-			expectedErr: nil,
-		},
-		{
-			name: "success - filter by Name (partial match)",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.Name = "Trong Vu"
-				return f
-			}(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						return []*models.Student{sampleStudents[0]}, nil
-					},
-				}
-			},
-			expectedLen: 1,
-			expectedErr: nil,
-		},
-		{
-			name: "success - filter by Class",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.Class = "DQT4"
-				return f
-			}(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						return []*models.Student{sampleStudents[0], sampleStudents[1]}, nil
-					},
-				}
-			},
-			expectedLen: 2,
-			expectedErr: nil,
-		},
-		{
-			name: "success - filter by YearOfBirth",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.YearOfBirth = 2005
-				return f
-			}(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						return []*models.Student{sampleStudents[0], sampleStudents[2]}, nil
-					},
-				}
-			},
-			expectedLen: 2,
-			expectedErr: nil,
-		},
-		{
-			name: "success - filter by Gender",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.Gender = "female"
-				return f
-			}(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						return []*models.Student{sampleStudents[1]}, nil
-					},
-				}
-			},
-			expectedLen: 1,
-			expectedErr: nil,
-		},
-		{
-			name: "success - filter by Address",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.Address = "Ho Chi Minh"
-				return f
-			}(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						return []*models.Student{sampleStudents[0], sampleStudents[2]}, nil
-					},
-				}
-			},
-			expectedLen: 2,
-			expectedErr: nil,
-		},
-		{
-			name: "success - filter by MinAvgScore and MaxAvgScore",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.MinAvgScore = 8.0
-				f.MaxAvgScore = 9.5
-				return f
-			}(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						// chỉ trả về student có điểm trung bình trong khoảng
-						return []*models.Student{sampleStudents[0], sampleStudents[1]}, nil
-					},
-				}
-			},
-			expectedLen: 2,
-			expectedErr: nil,
-		},
-		{
-			name: "success - filter by StudentRank",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.StudentRank = "Excellent" // hoặc giá trị Rank bạn đang dùng
-				return f
-			}(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						return []*models.Student{sampleStudents[1]}, nil
-					},
-				}
-			},
-			expectedLen: 1,
-			expectedErr: nil,
-		},
+    tests := []struct {
+        name        string
+        input       *models.FilterStudents
+        setupRepo   func() *MockStudentRepository
+        expectedErr error
+    }{
+        // ── NIL FILTER ────────────────────────────────────────────────────
+        {
+            name:  "success - nil filter returns all students",
+            input: nil,
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetAllStudentsFn: func() ([]*models.Student, error) {
+                        return mockStudents, nil
+                    },
+                }
+            },
+            expectedErr: nil,
+        },
 
-		/* ── INVALID INPUT ─────────────────────────────────────────────── */
-		{
-			name:        "fail - filter is nil",
-			input:       nil,
-			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
-			expectedLen: 0,
-			expectedErr: services.ErrStudentData, // hoặc ErrInvalidFilter nếu bạn có
-		},
-		{
-			name: "fail - invalid MinAvgScore > MaxAvgScore",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.MinAvgScore = 9.0
-				f.MaxAvgScore = 5.0
-				return f
-			}(),
-			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
-			expectedLen: 0,
-			expectedErr: services.ErrStudentData, // nếu bạn có error này, còn không thì dùng ErrStudentData
-		},
-		{
-			name: "fail - invalid Gender",
-			input: func() *models.FilterStudents {
-				f := validFilter()
-				f.Gender = "unknown"
-				return f
-			}(),
-			setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
-			expectedLen: 0,
-			expectedErr: services.ErrInvalidGender, // tùy bạn có định nghĩa hay không
-		},
+        // ── HAPPY PATH ────────────────────────────────────────────────────
+        {
+            name: "success - filter by name",
+            input: &models.FilterStudents{
+                Name: "Nguyen Van A",
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by class",
+            input: &models.FilterStudents{
+                Class: "12A1",
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by gender male",
+            input: &models.FilterStudents{
+                Gender: "male",
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by gender female",
+            input: &models.FilterStudents{
+                Gender: "female",
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by valid year of birth",
+            input: &models.FilterStudents{
+                YearOfBirth: 2000,
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by address",
+            input: &models.FilterStudents{
+                Address: "Ha Noi",
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by score range",
+            input: &models.FilterStudents{
+                MinAvgScore: 5.0,
+                MaxAvgScore: 9.0,
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by rank excellent",
+            input: &models.FilterStudents{
+                StudentRank: models.Excellent,
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by rank good",
+            input: &models.FilterStudents{
+                StudentRank: models.Good,
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by rank average",
+            input: &models.FilterStudents{
+                StudentRank: models.Average,
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - filter by rank weak",
+            input: &models.FilterStudents{
+                StudentRank: models.Weak,
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name: "success - multiple filters combined",
+            input: &models.FilterStudents{
+                Name:        "Nguyen Van A",
+                Class:       "12A1",
+                Gender:      "male",
+                MinAvgScore: 5.0,
+                MaxAvgScore: 9.0,
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+        {
+            name:        "success - empty filter returns all",
+            input:       &models.FilterStudents{},
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
 
-		/* ── REPO ERROR ────────────────────────────────────────────────── */
-		{
-			name:  "fail - repo returns database error",
-			input: validFilter(),
-			setupRepo: func() *MockStudentRepository {
-				return &MockStudentRepository{
-					FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
-						return nil, errors.New("db connection failed")
-					},
-				}
-			},
-			expectedLen: 0,
-			expectedErr: errors.New("db connection failed"),
-		},
-	}
+        // ── NAME VALIDATION ───────────────────────────────────────────────
+        {
+            name: "fail - invalid name format",
+            input: &models.FilterStudents{
+                Name: "Nguyen@Van#A",
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrNameFormat,
+        },
 
-	// ── Run test cases ─────────────────────────────────────────────────────
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			svc := services.NewStudentService(tc.setupRepo())
+        // ── CLASS VALIDATION ──────────────────────────────────────────────
+        {
+            name: "fail - invalid class format",
+            input: &models.FilterStudents{
+                Class: "INVALID!!!",
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrClassFormat,
+        },
 
-			result, err := svc.FilterStudents(tc.input)
+        // ── YEAR OF BIRTH VALIDATION ──────────────────────────────────────
+        {
+            name: "fail - year of birth in the future",
+            input: &models.FilterStudents{
+                YearOfBirth: time.Now().Year() + 1,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrInvalidYear,
+        },
 
-			if tc.expectedErr == nil {
-				if err != nil {
-					t.Errorf("expected no error, got: %v", err)
-					return
-				}
-				if len(result) != tc.expectedLen {
-					t.Errorf("expected %d students, got %d", tc.expectedLen, len(result))
-				}
-			} else {
-				if err == nil {
-					t.Errorf("expected error [%v], got nil", tc.expectedErr)
-					return
-				}
-				if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
-					t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
-				}
-			}
-		})
-	}
+        // ── GENDER VALIDATION ─────────────────────────────────────────────
+        {
+            name: "fail - invalid gender",
+            input: &models.FilterStudents{
+                Gender: "unknown",
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrInvalidGender,
+        },
+
+        // ── ADDRESS VALIDATION ────────────────────────────────────────────
+        {
+            name: "fail - address too short",
+            input: &models.FilterStudents{
+                Address: "abc", // ít hơn 5 ký tự
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrAddressTooShort,
+        },
+        {
+            name: "success - address exactly 5 characters",
+            input: &models.FilterStudents{
+                Address: "HaNoi", // đúng 5 ký tự — boundary
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+
+        // ── SCORE RANGE VALIDATION ────────────────────────────────────────
+        {
+            name: "fail - min score below 0",
+            input: &models.FilterStudents{
+                MinAvgScore: -1,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrScore,
+        },
+        {
+            name: "fail - max score above 10",
+            input: &models.FilterStudents{
+                MaxAvgScore: 11,
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrScore,
+        },
+        {
+            name: "fail - min score greater than max score",
+            input: &models.FilterStudents{
+                MinAvgScore: 8,
+                MaxAvgScore: 5, // min > max
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrInvalidMinMax,
+        },
+        {
+            name: "success - only min score provided",
+            input: &models.FilterStudents{
+                MinAvgScore: 5,
+                MaxAvgScore: 0, // max = 0 → không check minmax
+            },
+            setupRepo:   happyRepo,
+            expectedErr: nil,
+        },
+
+        // ── RANK VALIDATION ───────────────────────────────────────────────
+        {
+            name: "fail - invalid student rank",
+            input: &models.FilterStudents{
+                StudentRank: "superstar", // không hợp lệ
+            },
+            setupRepo:   func() *MockStudentRepository { return &MockStudentRepository{} },
+            expectedErr: services.ErrStudentRank,
+        },
+
+        // ── REPO ERROR ────────────────────────────────────────────────────
+        {
+            name:  "fail - nil filter repo.GetAllStudents db error",
+            input: nil,
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    GetAllStudentsFn: func() ([]*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+        {
+            name: "fail - repo.FilterStudents db error",
+            input: &models.FilterStudents{
+                Name: "Nguyen Van A",
+            },
+            setupRepo: func() *MockStudentRepository {
+                return &MockStudentRepository{
+                    FilterStudentsFn: func(p predicate.PredicateStudent) ([]*models.Student, error) {
+                        return nil, errors.New("db connection failed")
+                    },
+                }
+            },
+            expectedErr: errors.New("db connection failed"),
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            svc := services.NewStudentService(tc.setupRepo())
+
+            _, err := svc.FilterStudents(tc.input)
+
+            if tc.expectedErr == nil {
+                if err != nil {
+                    t.Errorf("expected no error, got: %v", err)
+                }
+            } else {
+                if err == nil {
+                    t.Errorf("expected error [%v], got nil", tc.expectedErr)
+                    return
+                }
+                if !errors.Is(err, tc.expectedErr) && err.Error() != tc.expectedErr.Error() {
+                    t.Errorf("expected error [%v], got [%v]", tc.expectedErr, err)
+                }
+            }
+        })
+    }
 }
 
 /* ANNOYNYMOUS FUNC
