@@ -61,7 +61,7 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 		return ErrStudentData
 	}
 
-	student = nomarlizeStudent(student)
+	student = normalizeStudent(student)
 
 	if err := validateStudent(student); err != nil {
 		return err
@@ -99,7 +99,7 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 		return ErrStudentNotFound
 	}
 
-	student = nomarlizeStudent(student)
+	student = normalizeStudent(student)
 
 	if err := validateStudent(student); err != nil {
 		return err
@@ -283,7 +283,7 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 	if filter == nil {
 		return s.repo.GetAllStudents()
 	}
-	
+
 	filter = normalizeFilterStudent(filter)
 
 	if err := validateFilterStudents(filter); err != nil {
@@ -297,7 +297,7 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 
 }
 
-func nomarlizeStudent(s *models.Student) *models.Student {
+func normalizeStudent(s *models.Student) *models.Student {
 	cp := *s
 	cp.FullName = strings.TrimSpace(cp.FullName)
 	cp.Email = strings.ToLower(strings.TrimSpace(cp.Email))
@@ -306,8 +306,12 @@ func nomarlizeStudent(s *models.Student) *models.Student {
 }
 
 func validateStudent(student *models.Student) error {
-	if student.FullName == "" || student.Email == "" {
-		return ErrStudentData
+	if student.FullName == "" {
+		return ErrNameRequired
+	}
+
+	if student.Email == "" {
+		return ErrEmailRequired
 	}
 
 	if !utils.IsValidStudentName(student.FullName) {
@@ -438,11 +442,11 @@ func validateFilterStudents(filter *models.FilterStudents) error {
 	if filter.Address != "" && len([]rune(filter.Address)) < 5 {
 		return ErrAddressTooShort
 	}
-		// VALIDATE SCORE RANGE
+	// VALIDATE SCORE RANGE
 	if err := validateFilterScoreRange(filter); err != nil {
 		return err
 	}
-	
+
 	// VALIDATE STUDENT RANK
 	if err := validateStudentRank(filter); err != nil {
 		return err
