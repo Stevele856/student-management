@@ -1,4 +1,4 @@
-package services_test
+package services
 
 import (
 	"github.com/student-management/internal/models"
