@@ -371,3 +371,110 @@ func TestAddStudent(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateStudent(t *testing.T) {
+	validStudent := &models.Student{
+		ID: "id-123",
+		FullName:    "Nguyen Van A",
+		DateOfBirth: time.Now().AddDate(-26, 2, 3),
+		Gender:      "male",
+		Address:     "Ho Chi Minh City",
+		Class:       "4A",
+		Email:       "vult@gmail.com",
+		Scores: []*models.SubjectScore{
+			{
+				Subject: "Toan",
+				Score:   6.5,
+			},
+		},
+	}
+	tests := []struct {
+		name        string
+		input       *models.Student
+		mockRepo    *MockStudentRepository
+		expectedErr error
+	}{
+		{
+			name:        "nil student",
+			input:       nil,
+			mockRepo:    &MockStudentRepository{},
+			expectedErr: ErrStudentData,
+		},
+		{
+			name: "missing ID",
+			input: &models.Student{
+				FullName: "Nguyen Van A",
+			},
+			mockRepo:    &MockStudentRepository{},
+			expectedErr: ErrIDRequired,
+		},
+		{
+			name:  "error GetStudentByID",
+			input: validStudent,
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: func(studentID string) (*models.Student, error) {
+					return nil, errors.New("DB error")
+				},
+			},
+			expectedErr: errors.New("DB error"),
+		},
+		{
+			name:  "student ID not found",
+			input: validStudent,
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: func(studentID string) (*models.Student, error) {
+					return nil, nil
+				},
+			},
+			expectedErr: ErrStudentNotFound,
+		},
+		{
+			name:  "email already existed",
+			input: validStudent,
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: func(studentID string) (*models.Student, error) {
+					return validStudent, nil
+				},
+				GetStudentByEmailFn: func(studentEmail string) (*models.Student, error) {
+					return &models.Student{ID: "other-id"}, nil
+				},
+			},
+			expectedErr: ErrEmailExisted,
+		},
+		{
+			name:  "email existed and same ID",
+			input: validStudent,
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: func(studentID string) (*models.Student, error) {
+					return validStudent, nil
+				},
+				GetStudentByEmailFn: func(studentEmail string) (*models.Student, error) {
+					return &models.Student{ID: validStudent.ID}, nil
+				},
+				UpdateStudentFn: func(student *models.Student) error {
+					return nil
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &StudentService{repo: tc.mockRepo}
+			err := service.UpdateStudent(tc.input)
+
+			if tc.expectedErr != nil {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tc.expectedErr)
+				} else if err.Error() != tc.expectedErr.Error() {
+					t.Errorf("expected error %q, got %q", tc.expectedErr, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error, got %q", err)
+				}
+			}
+		})
+	}
+}
