@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -302,6 +303,245 @@ func TestUpdateStudent(t *testing.T) {
 			err := service.UpdateStudent(tc.input)
 
 			assertError(t, err, tc.expectedErr)
+		})
+	}
+}
+
+func TestDeleteStudent(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		mockRepo    *MockStudentRepository
+		expectedErr error
+	}{
+		{
+			name:        "WhiteSpace ID",
+			input:       "   ",
+			mockRepo:    &MockStudentRepository{},
+			expectedErr: ErrIDRequired,
+		},
+		{
+			name:        "missing ID",
+			input:       "",
+			mockRepo:    &MockStudentRepository{},
+			expectedErr: ErrIDRequired,
+		},
+		{
+			name:  "error GetStudentByID",
+			input: "id-123",
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: returnGetStudentByID(nil),
+			},
+			expectedErr: ErrStudentNotFound,
+		},
+
+		{
+			name:  "student ID not found",
+			input: "id-123",
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: returnGetStudentByID(nil),
+			},
+			expectedErr: ErrStudentNotFound,
+		},
+		{
+			name:  "delete student successfully", // HAPPY PATH
+			input: "id-123",
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: returnGetStudentByID(makeValidStudent("id-123")),
+				DeleteStudentFn:  func(studentID string) error { return nil },
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &StudentService{repo: tc.mockRepo}
+			err := service.DeleteStudent(tc.input)
+			assertError(t, err, tc.expectedErr)
+		})
+	}
+}
+
+func TestGetAllStudents(t *testing.T) {
+	tests := []struct {
+		name             string
+		mockRepo         *MockStudentRepository
+		expectedStudents []*models.Student
+		expectedErr      error
+	}{
+		{
+			name: "repo return error",
+			mockRepo: &MockStudentRepository{
+				GetAllStudentsFn: func() ([]*models.Student, error) {
+					return nil, ErrStudentData
+				},
+			},
+			expectedStudents: nil,
+			expectedErr:      ErrStudentData,
+		},
+
+		{
+			name: "repo empty list",
+			mockRepo: &MockStudentRepository{
+				GetAllStudentsFn: func() ([]*models.Student, error) {
+					return []*models.Student{}, nil
+				},
+			},
+			expectedStudents: []*models.Student{},
+			expectedErr:      nil,
+		},
+
+		{
+			name: "repo return students",
+			mockRepo: &MockStudentRepository{
+				GetAllStudentsFn: func() ([]*models.Student, error) {
+					return []*models.Student{
+						makeValidStudent("id-1"),
+						makeValidStudent("id-2"),
+						makeValidStudent("id-3"),
+					}, nil
+				},
+			},
+			expectedStudents: []*models.Student{
+				makeValidStudent("id-1"),
+				makeValidStudent("id-2"),
+				makeValidStudent("id-3"),
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &StudentService{repo: tc.mockRepo}
+			students, err := service.GetAllStudents()
+			assertError(t, err, tc.expectedErr)
+
+			if len(students) != len(tc.expectedStudents) {
+				t.Errorf("len(students): got %d, want %d", len(students), len(tc.expectedStudents))
+			}
+		})
+	}
+}
+
+func TestGetStudentByID(t *testing.T) {
+	tests := []struct {
+		name            string
+		input           string
+		mockRepo        *MockStudentRepository
+		expectedStudent *models.Student
+		expectedErr     error
+	}{
+		{
+			name:            "whitespace ID",
+			input:           "   ",
+			mockRepo:        &MockStudentRepository{},
+			expectedStudent: nil,
+			expectedErr:     ErrIDRequired,
+		},
+		{
+			name:            "missing ID",
+			input:           "",
+			mockRepo:        &MockStudentRepository{},
+			expectedStudent: nil,
+			expectedErr:     ErrIDRequired,
+		},
+
+		{
+			name:  "error GetStudentByID",
+			input: "id-123",
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: func(studentID string) (*models.Student, error) {
+					return nil, ErrStudentData
+				},
+			},
+			expectedStudent: nil,
+			expectedErr:     ErrStudentData,
+		},
+
+		{
+			name:  "get student by ID successfully",
+			input: "id-123",
+			mockRepo: &MockStudentRepository{
+				GetStudentByIDFn: returnGetStudentByID(makeValidStudent("id-123")),
+			},
+			expectedStudent: makeValidStudent("id-123"),
+			expectedErr:     nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &StudentService{repo: tc.mockRepo}
+			student, err := service.GetStudentByID(tc.input)
+			assertError(t, err, tc.expectedErr)
+
+			if (student == nil) != (tc.expectedStudent == nil) {
+				t.Errorf("student: got %v, want %v", student, tc.expectedStudent)
+			}
+		})
+	}
+}
+
+func TestGetStudentByEmail(t *testing.T) {
+	tests := []struct {
+		name            string
+		input           string
+		mockRepo        *MockStudentRepository
+		expectedStudent *models.Student
+		expectedErr     error
+	}{
+		{
+			name:            "missing email",
+			input:           "",
+			mockRepo:        &MockStudentRepository{},
+			expectedStudent: nil,
+			expectedErr:     ErrEmailRequired,
+		},
+		{
+			name:            "invalid email format",
+			input:           "invalid-email",
+			mockRepo:        &MockStudentRepository{},
+			expectedStudent: nil,
+			expectedErr:     ErrEmailFormat,
+		},
+		{
+			name:  "white space email",
+			input: "  vult@gmail.com  ",
+			mockRepo: &MockStudentRepository{
+				GetStudentByEmailFn: returnGetStudentByEmail(makeValidStudent("id-123")),
+			},
+			expectedStudent: makeValidStudent("id-123"),
+			expectedErr:     nil,
+		},
+		{
+			name:  "error return repo",
+			input: "vult@gmail.com",
+			mockRepo: &MockStudentRepository{
+				GetStudentByEmailFn: returnDBError("DB error"),
+			},
+			expectedStudent: nil,
+			expectedErr:     errors.New("DB error"),
+		},
+		{
+			name:  "get student by email return successfully",
+			input: "vult@gmail.com",
+			mockRepo: &MockStudentRepository{
+				GetStudentByEmailFn: returnGetStudentByEmail(makeValidStudent("id-123")),
+			},
+			expectedStudent: makeValidStudent("id-123"),
+			expectedErr:     nil,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			service := &StudentService{repo: tc.mockRepo}
+			student, err := service.GetStudentByEmail(tc.input)
+
+			assertError(t, err, tc.expectedErr)
+			if (student == nil) != (tc.expectedStudent == nil) {
+				t.Errorf("student: got %v, want %v", student, tc.expectedStudent)
+			}
 		})
 	}
 }

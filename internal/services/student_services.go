@@ -43,7 +43,7 @@ var (
 	ErrDublicatedSubject     = errors.New("student cannot have duplicate subject score")
 	ErrStudentNotFound       = errors.New("student not found")
 	ErrSubjectAlreadyExisted = errors.New("subject already existed")
-	ErrStudentID             = errors.New("student ID not found")
+	ErrStudentIDNotFound     = errors.New("student ID not found")
 	ErrStudentEmail          = errors.New("student email does not exist")
 
 	ErrInvalidYear     = errors.New("invalid year of birth")
@@ -90,12 +90,12 @@ func (s *StudentService) UpdateStudent(student *models.Student) error {
 	if student.ID == "" {
 		return ErrIDRequired
 	}
-	existing, err := s.repo.GetStudentByID(student.ID)
+	student, err := s.repo.GetStudentByID(student.ID)
 	if err != nil {
 		return err
 	}
 
-	if existing == nil {
+	if student == nil {
 		return ErrStudentNotFound
 	}
 
@@ -121,7 +121,7 @@ func (s *StudentService) DeleteStudent(studentID string) error {
 	studentID = strings.TrimSpace(studentID)
 
 	if studentID == "" {
-		return ErrStudentID
+		return ErrIDRequired
 	}
 
 	existing, err := s.repo.GetStudentByID(studentID)
@@ -145,7 +145,7 @@ func (s *StudentService) GetAllStudents() ([]*models.Student, error) {
 func (s *StudentService) GetStudentByID(studentID string) (*models.Student, error) {
 	studentID = strings.TrimSpace(studentID)
 	if studentID == "" {
-		return nil, ErrStudentID
+		return nil, ErrIDRequired
 	}
 	return s.repo.GetStudentByID(studentID)
 }
@@ -154,7 +154,7 @@ func (s *StudentService) GetStudentByID(studentID string) (*models.Student, erro
 func (s *StudentService) GetStudentByEmail(studentEmail string) (*models.Student, error) {
 	studentEmail = strings.TrimSpace(studentEmail)
 	if studentEmail == "" {
-		return nil, ErrStudentEmail
+		return nil, ErrEmailRequired
 	}
 	if !utils.IsValidStudentEmail(studentEmail) {
 		return nil, ErrEmailFormat
