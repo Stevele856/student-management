@@ -394,10 +394,10 @@ func (h *StudentHandler) ExportStudents(w http.ResponseWriter, r *http.Request) 
 	var err error
 
 	// If filter parameters exist, use filtered results
-	if q.Get("name") != "" || q.Get("class") != "" || q.Get("gender") != "" || 
-		q.Get("year_of_birth") != "" || q.Get("address") != "" || 
+	if q.Get("name") != "" || q.Get("class") != "" || q.Get("gender") != "" ||
+		q.Get("year_of_birth") != "" || q.Get("address") != "" ||
 		q.Get("min_score") != "" || q.Get("max_score") != "" || q.Get("rank") != "" {
-		
+
 		filter := &models.FilterStudents{
 			Name:    q.Get("name"),
 			Class:   q.Get("class"),
