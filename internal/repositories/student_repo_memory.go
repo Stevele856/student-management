@@ -232,3 +232,27 @@ func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*mod
 	}
 	return result, nil
 }
+
+/* ----------------------------- */
+
+// BULK ADD STUDENTS (CSV)
+func (r *InMemoStudentRepo) BulkAddStudents(students []*models.Student) error {
+	if len(students) == 0 {
+		return nil
+	}
+
+	// Check for duplicate IDs in the input and existing students
+	for _, student := range students {
+		if _, existed := r.students[student.ID]; existed {
+			return fmt.Errorf("student with ID %s already exists", student.ID)
+		}
+	}
+
+	// Add all students to the map
+	for _, student := range students {
+		r.students[student.ID] = student
+	}
+
+	// Save all students to file
+	return r.saveFile()
+}

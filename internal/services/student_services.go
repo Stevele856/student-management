@@ -509,6 +509,55 @@ func filterPredicateStudents(filter *models.FilterStudents) []predicate.Predicat
 	return predicates
 }
 
+// BULK ADD STUDENTS
+func (s *StudentService) BulkAddStudents(students []*models.Student) error {
+	if len(students) == 0 {
+		return nil
+	}
+
+	// Normalize and validate all students
+	validatedStudents := make([]*models.Student, len(students))
+	emailSet := make(map[string]bool) // Track emails within input for duplicates
+
+	for i, student := range students {
+		if student == nil {
+			return ErrStudentData
+		}
+
+		student = normalizeStudent(student)
+
+		if err := validateStudent(student); err != nil {
+			return err
+		}
+
+		// Check for duplicate emails within the input
+		email := strings.ToLower(student.Email)
+		if emailSet[email] {
+			return ErrEmailExisted
+		}
+		emailSet[email] = true
+
+		validatedStudents[i] = student
+	}
+
+	// Check for email conflicts with existing students
+	for _, student := range validatedStudents {
+		existed, err := s.repo.GetStudentByEmail(student.Email)
+		if err == nil && existed != nil {
+			return ErrEmailExisted
+		}
+	}
+
+	// Generate UUIDs for students without IDs
+	for _, student := range validatedStudents {
+		if student.ID == "" {
+			student.ID = uuid.New().String()
+		}
+	}
+
+	return s.repo.BulkAddStudents(validatedStudents)
+}
+
 /*
 student == nil => student not found
 student != nil =>  student found

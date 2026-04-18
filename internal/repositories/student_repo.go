@@ -26,4 +26,7 @@ type StudentRepository interface {
 
 	// Filter
 	FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error)	
+
+	// CSV
+	BulkAddStudents(students []*models.Student) error
 }

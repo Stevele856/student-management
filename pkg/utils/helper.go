@@ -18,7 +18,6 @@ func IsValidStudentEmail(email string) bool {
 }
 
 
-
 var studentName = regexp.MustCompile(`^[\p{L}]+(?:[\s'-][\p{L}]+)*$`)
 func IsValidStudentName(name string) bool {
 
@@ -35,8 +34,6 @@ var studentClass = regexp.MustCompile(`^\d{1,2}-?[A-Z]$`)
 func IsValidClass(class string) bool {
 	return studentClass.MatchString(class)
 }
-
-
 
 func IsValidScores(scores []*models.SubjectScore) bool {
 	// MAXIMUM 10 SUBJECTS
