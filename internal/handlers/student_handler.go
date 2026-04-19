@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/student-management/internal/models"
-	"github.com/student-management/internal/services"
+	"github.com/student-management/internal/models/student"
+	"github.com/student-management/internal/services/student"
 	"github.com/student-management/pkg/utils"
 )
 

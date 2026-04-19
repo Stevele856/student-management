@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/models/student"
 )
 
 func TestValidateStudent(t *testing.T) {
@@ -545,3 +545,6 @@ func TestGetStudentByEmail(t *testing.T) {
 		})
 	}
 }
+
+// TEST SCORE ---------------------------
+

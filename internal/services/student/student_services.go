@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/models/student"
 	"github.com/student-management/internal/predicate"
-	"github.com/student-management/internal/repositories"
+	"github.com/student-management/internal/repositories/student"
 	"github.com/student-management/pkg/utils"
 )
 

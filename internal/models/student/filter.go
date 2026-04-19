@@ -1,5 +1,6 @@
 package models
 
+
 type FilterStudents struct {
 	Name        string
 	Class       string

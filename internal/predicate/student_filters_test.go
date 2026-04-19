@@ -5,29 +5,30 @@ import (
 	"time"
 
 	"github.com/student-management/internal/models"
+	student "github.com/student-management/internal/models/student"
 	"github.com/student-management/internal/predicate"
 )
 
-func mockStudent(name, class, gender string, year int) *models.Student {
-	return &models.Student{
+func mockStudent(name, class, gender string, year int) *student.Student {
+	return &student.Student{
 		FullName:    name,
 		Class:       class,
-		Gender:      gender,
+		Gender:      models.Gender(gender),
 		DateOfBirth: time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 }
 
-func mockStudentWithScore(score []*models.SubjectScore) *models.Student {
-	return &models.Student{
+func mockStudentWithScore(score []*student.SubjectScore) *student.Student {
+	return &student.Student{
 		Scores: score,
 	}
 }
 
-func mockStudentWithMultipleCategories(name, class, gender string, year int, score []*models.SubjectScore) *models.Student {
-	return &models.Student{
+func mockStudentWithMultipleCategories(name, class, gender string, year int, score []*student.SubjectScore) *student.Student {
+	return &student.Student{
 		FullName:    name,
 		Class:       class,
-		Gender:      gender,
+		Gender:      models.Gender(gender),
 		DateOfBirth: time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC),
 		Scores:      score,
 	}
@@ -68,7 +69,7 @@ func TestByYear(t *testing.T) {
 func TestByAvgScore(t *testing.T) {
 
 	// avg = (8.5 + 8 + 9) / 3 = 8.5
-	scores := []*models.SubjectScore{
+	scores := []*student.SubjectScore{
 		{Subject: "Toan", Score: 8.5},
 		{Subject: "Anh Van", Score: 8.0},
 		{Subject: "Tin Hoc", Score: 9.0},
@@ -91,16 +92,16 @@ func TestByAvgScore(t *testing.T) {
 
 func TestByRank(t *testing.T) {
 	// avg = (8.5 + 8 + 9) / 3 = 8.5
-	scores := []*models.SubjectScore{
+	scores := []*student.SubjectScore{
 		{Subject: "Toan", Score: 8.5},
 		{Subject: "Anh Van", Score: 8.0},
 		{Subject: "Tin Hoc", Score: 9.0},
 	}
-	student := mockStudentWithScore(scores)
+	s := mockStudentWithScore(scores)
 
-	p := predicate.ByRank(models.Good)
+	p := predicate.ByRank(student.Good)
 
-	if !p(student) {
+	if !p(s) {
 		t.Error("expected true, got false")
 	}
 }
@@ -110,13 +111,13 @@ func TestAnd(t *testing.T) {
 		predicate.ByName("Nguyen"),
 		predicate.ByClass("10A"),
 		predicate.ByAvgScore(7.0, 8.5),
-		predicate.ByRank(models.Good),
+		predicate.ByRank(student.Good),
 	)
 
 	// match
 	studentA := mockStudentWithMultipleCategories(
 		"Nguyen Van A", "10A", "male", 2000,
-		[]*models.SubjectScore{
+		[]*student.SubjectScore{
 			{Subject: "Toan", Score: 7.0},
 			{Subject: "Anh Van", Score: 8.0},
 			{Subject: "Toan", Score: 8.0},
@@ -130,7 +131,7 @@ func TestAnd(t *testing.T) {
 	// not match
 	studentB := mockStudentWithMultipleCategories(
 		"Nguyen Van A", "10B", "male", 2000,
-		[]*models.SubjectScore{
+		[]*student.SubjectScore{
 			{Subject: "Toan", Score: 8.0},
 			{Subject: "Anh Van", Score: 8.0},
 			{Subject: "Toan", Score: 8.0},

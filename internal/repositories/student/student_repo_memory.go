@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/models/student"
 	"github.com/student-management/internal/predicate"
 )
 

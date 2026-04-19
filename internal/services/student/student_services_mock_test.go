@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/models/student"
 	"github.com/student-management/internal/predicate"
 )
 
@@ -23,6 +23,8 @@ type MockStudentRepository struct {
 	GetScoresBySubjectFn   func(studentID, subject string) (*models.SubjectScore, error)
 
 	FilterStudentsFn func(p predicate.PredicateStudent) ([]*models.Student, error)
+	// CSV
+	BulkAddStudentsFn func(students []*models.Student) error
 }
 
 /*-------IMPLEMENT INTERFACE ------- */
@@ -72,4 +74,8 @@ func (m *MockStudentRepository) GetScoresBySubject(studentID, subject string) (*
 
 func (m *MockStudentRepository) FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error){
 	return m.FilterStudentsFn(p)
+}
+
+func (m *MockStudentRepository) BulkAddStudents(student []*models.Student) error{
+	return m.BulkAddStudentsFn(student)
 }

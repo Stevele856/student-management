@@ -6,14 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-)
 
-// Enum type
-type Gender string
-
-const (
-	GenderMale   Gender = "male"
-	GenderFemale Gender = "female"
+	"github.com/student-management/internal/models"
 )
 
 type Rank string
@@ -34,7 +28,7 @@ type Student struct {
 	ID          string          `json:"id"`
 	FullName    string          `json:"full_name"`
 	DateOfBirth time.Time       `json:"date_of_birth"`
-	Gender      string          `json:"gender"`
+	Gender      models.Gender   `json:"gender"`
 	Address     string          `json:"address"`
 	Class       string          `json:"class"`
 	Email       string          `json:"email"`
@@ -55,7 +49,7 @@ func (s *Student) ToCSVRows() [][]string {
 		s.ID,
 		s.FullName,
 		s.DateOfBirth.Format(DateLayout),
-		s.Gender,
+		string(s.Gender),
 		s.Address,
 		s.Class,
 		s.Email,
@@ -93,11 +87,16 @@ func StudentFromCSVRows(rows [][]string) (*Student, error) {
 		return nil, fmt.Errorf("invalid date_of_birth %q: %w", first[2], err)
 	}
 
+	gender, err := models.ParseGender(first[3])
+	if err != nil {
+		return nil, fmt.Errorf("invalid gender at row: %w", err)
+	}
+
 	s := &Student{
 		ID:          first[0],
 		FullName:    first[1],
 		DateOfBirth: dob,
-		Gender:      first[3],
+		Gender:      gender,
 		Address:     first[4],
 		Class:       first[5],
 		Email:       first[6],
@@ -119,3 +118,5 @@ func StudentFromCSVRows(rows [][]string) (*Student, error) {
 
 	return s, nil
 }
+
+

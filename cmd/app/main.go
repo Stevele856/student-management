@@ -6,8 +6,8 @@ import (
 
 	"github.com/student-management/config"
 	"github.com/student-management/internal/handlers"
-	"github.com/student-management/internal/repositories"
-	"github.com/student-management/internal/services"
+	"github.com/student-management/internal/repositories/student"
+	"github.com/student-management/internal/services/student"
 )
 
 func main(){

@@ -5,7 +5,7 @@ import (
 	"net/mail"
 	"regexp"
 
-	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/models/student"
 )
 
 func IsValidStudentEmail(email string) bool {
@@ -60,6 +60,7 @@ func IsValidSubject(subject string) bool {
 
 }
 
+
 func CalAvgScore(scores []*models.SubjectScore) float64 {
 	if len(scores) == 0 {
 		return 0
@@ -86,5 +87,9 @@ func CalcStudentRankBaseOnAvgScore(avg float64) models.Rank {
 		return models.Weak
 	}
 }
+
+
+
+
 
 

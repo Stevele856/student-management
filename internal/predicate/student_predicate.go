@@ -1,6 +1,6 @@
 package predicate
 
-import "github.com/student-management/internal/models"
+import "github.com/student-management/internal/models/student"
 
 type PredicateStudent func(*models.Student) bool
 

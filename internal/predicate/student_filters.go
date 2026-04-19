@@ -3,7 +3,7 @@ package predicate
 import (
 	"strings"
 
-	"github.com/student-management/internal/models"
+	"github.com/student-management/internal/models/student"
 	"github.com/student-management/pkg/utils"
 )
 
@@ -30,7 +30,7 @@ func ByYear(year int) PredicateStudent {
 
 func ByGender(gender string) PredicateStudent {
 	return func(s *models.Student) bool {
-		return strings.EqualFold(s.Gender, gender)
+		return strings.EqualFold(string(s.Gender), gender)
 	}
 }
 
