@@ -1,6 +1,6 @@
 // Step 1
 
-package models
+package studentModels
 
 import (
 	"fmt"

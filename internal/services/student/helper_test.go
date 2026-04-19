@@ -1,26 +1,26 @@
-package services
+package student
 
 import (
 	"errors"
 	"testing"
 	"time"
 
-	"github.com/student-management/internal/models/student"
+	studentModels "github.com/student-management/internal/models/student"
 )
 
-func baseStudent() *models.Student {
-	return &models.Student{
+func baseStudent() *studentModels.Student {
+	return &studentModels.Student{
 		FullName:    "Nguyen Van A",
 		DateOfBirth: time.Now().AddDate(-26, 2, 3),
 		Gender:      "male",
 		Address:     "Ho Chi Minh City",
 		Class:       "4A",
 		Email:       "vult@gmail.com",
-		Scores:      []*models.SubjectScore{{Subject: "Toan", Score: 6.5}},
+		Scores:      []*studentModels.SubjectScore{{Subject: "Toan", Score: 6.5}},
 	}
 }
 
-func makeValidStudent(id string) *models.Student{
+func makeValidStudent(id string) *studentModels.Student{
 	s := baseStudent()
 	s.ID = id
 	return s
@@ -56,20 +56,20 @@ func mutateField(t *testing.T, field, got, original string){
 }
 
 // mock func, closure func
-func returnGetStudentByEmail(s *models.Student) func(string) (*models.Student, error){
-	return func(email string) (*models.Student, error) {
+func returnGetStudentByEmail(s *studentModels.Student) func(string) (*studentModels.Student, error){
+	return func(email string) (*studentModels.Student, error) {
 		return s, nil
 	}
 }
 
-func returnGetStudentByID(s *models.Student) func(string) (*models.Student, error){
-	return func(id string) (*models.Student, error) {
+func returnGetStudentByID(s *studentModels.Student) func(string) (*studentModels.Student, error){
+	return func(id string) (*studentModels.Student, error) {
 		return s, nil
 	}
 }
 
-func returnDBError(msg string) func(string) (*models.Student, error) {
-	return func(_ string) (*models.Student, error) {
+func returnDBError(msg string) func(string) (*studentModels.Student, error) {
+	return func(_ string) (*studentModels.Student, error) {
 		return nil, errors.New(msg)
 	}
 }

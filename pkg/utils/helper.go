@@ -35,7 +35,7 @@ func IsValidClass(class string) bool {
 	return studentClass.MatchString(class)
 }
 
-func IsValidScores(scores []*models.SubjectScore) bool {
+func IsValidScores(scores []*studentModels.SubjectScore) bool {
 	// MAXIMUM 10 SUBJECTS
 	if len(scores) > 10 {
 		return false
@@ -61,7 +61,7 @@ func IsValidSubject(subject string) bool {
 }
 
 
-func CalAvgScore(scores []*models.SubjectScore) float64 {
+func CalAvgScore(scores []*studentModels.SubjectScore) float64 {
 	if len(scores) == 0 {
 		return 0
 	}
@@ -75,16 +75,16 @@ func CalAvgScore(scores []*models.SubjectScore) float64 {
 }
 
 
-func CalcStudentRankBaseOnAvgScore(avg float64) models.Rank {
+func CalcStudentRankBaseOnAvgScore(avg float64) studentModels.Rank {
 	switch {
 	case avg >= 9.0:
-		return models.Excellent
+		return studentModels.Excellent
 	case avg >= 7.0:
-		return models.Good
+		return studentModels.Good
 	case avg >= 5.0:
-		return models.Average
+		return studentModels.Average
 	default:
-		return models.Weak
+		return studentModels.Weak
 	}
 }
 

@@ -13,12 +13,12 @@ import (
 func main(){
 	cfg := config.Load()
 
-	repo, err := repositories.NewStudentMemoryRepo(cfg.DataFile)
+	repo, err := studentRepo.NewStudentMemoryRepo(cfg.DataFile)
 	if err != nil {
 		log.Fatalf("failed to initialize repository: %v", err)
 	}
 
-	service := services.NewStudentService(repo)
+	service := student.NewStudentService(repo)
 
 	handler := handlers.NewStudentHandler(service)
 

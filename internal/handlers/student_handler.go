@@ -13,10 +13,10 @@ import (
 )
 
 type StudentHandler struct {
-	service *services.StudentService
+	service *student.StudentService
 }
 
-func NewStudentHandler(service *services.StudentService) *StudentHandler {
+func NewStudentHandler(service *student.StudentService) *StudentHandler {
 	return &StudentHandler{
 		service: service,
 	}
@@ -37,33 +37,33 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 // Map service errors → HTTP status codes
 func serviceErrToStatus(err error) int {
 	switch {
-	case errors.Is(err, services.ErrStudentNotFound),
-		errors.Is(err, services.ErrIDRequired),
-		errors.Is(err, services.ErrStudentEmail),
-		errors.Is(err, services.ErrSubjectEmpty):
+	case errors.Is(err, student.ErrStudentNotFound),
+		errors.Is(err, student.ErrIDRequired),
+		errors.Is(err, student.ErrStudentEmail),
+		errors.Is(err, student.ErrSubjectEmpty):
 		return http.StatusNotFound
 
-	case errors.Is(err, services.ErrEmailExisted),
-		errors.Is(err, services.ErrSubjectAlreadyExisted),
-		errors.Is(err, services.ErrDublicatedSubject):
+	case errors.Is(err, student.ErrEmailExisted),
+		errors.Is(err, student.ErrSubjectAlreadyExisted),
+		errors.Is(err, student.ErrDublicatedSubject):
 		return http.StatusConflict
 
-	case errors.Is(err, services.ErrStudentData),
-		errors.Is(err, services.ErrNameFormat),
-		errors.Is(err, services.ErrEmailFormat),
-		errors.Is(err, services.ErrClassFormat),
-		errors.Is(err, services.ErrSubjectFormat),
-		errors.Is(err, services.ErrValidDOB),
-		errors.Is(err, services.ErrScore),
-		errors.Is(err, services.ErrMaxScore),
-		errors.Is(err, services.ErrIDRequired),
-		errors.Is(err, services.ErrNameRequired),
-		errors.Is(err, services.ErrStudentClass),
-		errors.Is(err, services.ErrInvalidYear),
-		errors.Is(err, services.ErrInvalidGender),
-		errors.Is(err, services.ErrAddressTooShort),
-		errors.Is(err, services.ErrInvalidMinMax),
-		errors.Is(err, services.ErrStudentRank):
+	case errors.Is(err, student.ErrStudentData),
+		errors.Is(err, student.ErrNameFormat),
+		errors.Is(err, student.ErrEmailFormat),
+		errors.Is(err, student.ErrClassFormat),
+		errors.Is(err, student.ErrSubjectFormat),
+		errors.Is(err, student.ErrValidDOB),
+		errors.Is(err, student.ErrScore),
+		errors.Is(err, student.ErrMaxScore),
+		errors.Is(err, student.ErrIDRequired),
+		errors.Is(err, student.ErrNameRequired),
+		errors.Is(err, student.ErrStudentClass),
+		errors.Is(err, student.ErrInvalidYear),
+		errors.Is(err, student.ErrInvalidGender),
+		errors.Is(err, student.ErrAddressTooShort),
+		errors.Is(err, student.ErrInvalidMinMax),
+		errors.Is(err, student.ErrStudentRank):
 		return http.StatusBadRequest
 
 	default:
@@ -140,7 +140,7 @@ func (h *StudentHandler) GetStudentByID(w http.ResponseWriter, r *http.Request) 
 
 // POST STUDENT
 func (h *StudentHandler) AddStudent(w http.ResponseWriter, r *http.Request) {
-	student := models.Student{}
+	student := studentModels.Student{}
 	if err := json.NewDecoder(r.Body).Decode(&student); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -159,7 +159,7 @@ func (h *StudentHandler) AddStudent(w http.ResponseWriter, r *http.Request) {
 func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	student := models.Student{}
+	student := studentModels.Student{}
 	if err := json.NewDecoder(r.Body).Decode(&student); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -218,7 +218,7 @@ func (h *StudentHandler) GetScoresBySubject(w http.ResponseWriter, r *http.Reque
 func (h *StudentHandler) AddScore(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	score := models.SubjectScore{}
+	score := studentModels.SubjectScore{}
 	if err := json.NewDecoder(r.Body).Decode(&score); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -237,7 +237,7 @@ func (h *StudentHandler) UpdateScore(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	subject := r.PathValue("subject")
 
-	score := models.SubjectScore{}
+	score := studentModels.SubjectScore{}
 	if err := json.NewDecoder(r.Body).Decode(&score); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
@@ -269,7 +269,7 @@ func (h *StudentHandler) DeleteScore(w http.ResponseWriter, r *http.Request) {
 func (h *StudentHandler) FilterStudents(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
-	filter := &models.FilterStudents{
+	filter := &studentModels.FilterStudents{
 		Name:    q.Get("name"),
 		Class:   q.Get("class"),
 		Gender:  q.Get("gender"),
@@ -307,7 +307,7 @@ func (h *StudentHandler) FilterStudents(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if v := q.Get("rank"); v != "" {
-		filter.StudentRank = models.Rank(v)
+		filter.StudentRank = studentModels.Rank(v)
 	}
 
 	students, err := h.service.FilterStudents(filter)
@@ -363,9 +363,9 @@ func (h *StudentHandler) BulkAddStudents(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Convert rows to Student objects
-	students := make([]*models.Student, 0, len(studentRows))
+	students := make([]*studentModels.Student, 0, len(studentRows))
 	for _, rowGroup := range studentRows {
-		student, err := models.StudentFromCSVRows(rowGroup)
+		student, err := studentModels.StudentFromCSVRows(rowGroup)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, fmt.Sprintf("failed to parse student from CSV: %v", err))
 			return
@@ -390,7 +390,7 @@ func (h *StudentHandler) ExportStudents(w http.ResponseWriter, r *http.Request) 
 	// Check for filter parameters
 	q := r.URL.Query()
 
-	var students []*models.Student
+	var students []*studentModels.Student
 	var err error
 
 	// If filter parameters exist, use filtered results
@@ -398,7 +398,7 @@ func (h *StudentHandler) ExportStudents(w http.ResponseWriter, r *http.Request) 
 		q.Get("year_of_birth") != "" || q.Get("address") != "" ||
 		q.Get("min_score") != "" || q.Get("max_score") != "" || q.Get("rank") != "" {
 
-		filter := &models.FilterStudents{
+		filter := &studentModels.FilterStudents{
 			Name:    q.Get("name"),
 			Class:   q.Get("class"),
 			Gender:  q.Get("gender"),
@@ -433,7 +433,7 @@ func (h *StudentHandler) ExportStudents(w http.ResponseWriter, r *http.Request) 
 		}
 
 		if v := q.Get("rank"); v != "" {
-			filter.StudentRank = models.Rank(v)
+			filter.StudentRank = studentModels.Rank(v)
 		}
 
 		students, err = h.service.FilterStudents(filter)
@@ -464,7 +464,7 @@ func (h *StudentHandler) ExportStudents(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 
 	// Write CSV to response
-	if err := utils.WriteCSV(w, models.CSVHeader(), csvRows); err != nil {
+	if err := utils.WriteCSV(w, studentModels.CSVHeader(), csvRows); err != nil {
 		// Headers already sent, log the error instead
 		fmt.Fprintf(w, "\nerror writing CSV: %v", err)
 		return

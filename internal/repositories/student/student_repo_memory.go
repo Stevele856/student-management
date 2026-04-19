@@ -1,5 +1,5 @@
 // Step 3:  implement interface
-package repositories
+package studentRepo
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/student-management/internal/models/student"
+	studentModels "github.com/student-management/internal/models/student"
 	"github.com/student-management/internal/predicate"
 )
 
@@ -15,7 +15,7 @@ import (
 // var _ StudentRepository = &InMemoStudentRepo{}
 
 type InMemoStudentRepo struct {
-	students map[string]*models.Student
+	students map[string]*studentModels.Student
 	filePath string
 	// Read/write JSON - Read file when initialized - Write file after Add/update/delete
 }
@@ -26,18 +26,18 @@ func (r *InMemoStudentRepo) loadFile() error {
 	file, err := os.ReadFile(r.filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			r.students = make(map[string]*models.Student)
+			r.students = make(map[string]*studentModels.Student)
 			return nil
 		}
 		return err
 	}
 
-	var data []*models.Student
+	var data []*studentModels.Student
 	if err := json.Unmarshal(file, &data); err != nil {
 		return err
 	}
 
-	r.students = make(map[string]*models.Student)
+	r.students = make(map[string]*studentModels.Student)
 	for _, value := range data {
 		r.students[value.ID] = value
 	}
@@ -48,7 +48,7 @@ func (r *InMemoStudentRepo) loadFile() error {
 // SAVE JSON
 func (r *InMemoStudentRepo) saveFile() error {
 
-	var studentData []*models.Student
+	var studentData []*studentModels.Student
 	for _, student := range r.students {
 		studentData = append(studentData, student)
 	}
@@ -64,7 +64,7 @@ func (r *InMemoStudentRepo) saveFile() error {
 // INITIALIZE EMPTY CONSTRUCTOR
 func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 	repo := &InMemoStudentRepo{
-		students: make(map[string]*models.Student),
+		students: make(map[string]*studentModels.Student),
 		filePath: filePath,
 	}
 
@@ -76,7 +76,7 @@ func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 }
 
 // CRUD STUDENT
-func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
+func (r *InMemoStudentRepo) AddStudent(student *studentModels.Student) error {
 
 	if _, existed := r.students[student.ID]; existed {
 		return fmt.Errorf("student with ID %s existed", student.ID)
@@ -86,7 +86,7 @@ func (r *InMemoStudentRepo) AddStudent(student *models.Student) error {
 	return r.saveFile()
 }
 
-func (r *InMemoStudentRepo) UpdateStudent(student *models.Student) error {
+func (r *InMemoStudentRepo) UpdateStudent(student *studentModels.Student) error {
 	if _, existed := r.students[student.ID]; !existed {
 		return fmt.Errorf("student with ID %s not existed", student.ID)
 	}
@@ -104,8 +104,8 @@ func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	return r.saveFile()
 }
 
-func (r *InMemoStudentRepo) GetAllStudents() ([]*models.Student, error) {
-	students := make([]*models.Student, 0, len(r.students))
+func (r *InMemoStudentRepo) GetAllStudents() ([]*studentModels.Student, error) {
+	students := make([]*studentModels.Student, 0, len(r.students))
 
 	for _, s := range r.students {
 		students = append(students, s)
@@ -113,7 +113,7 @@ func (r *InMemoStudentRepo) GetAllStudents() ([]*models.Student, error) {
 	return students, nil
 }
 
-func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, error) {
+func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*studentModels.Student, error) {
 	student, existed := r.students[studentID]
 	if !existed {
 		return nil, fmt.Errorf("student with ID %s does not exist", studentID)
@@ -122,7 +122,7 @@ func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*models.Student, e
 	return student, nil
 }
 
-func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Student, error) {
+func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*studentModels.Student, error) {
 	for _, student := range r.students {
 		if strings.EqualFold(student.Email, studentEmail) {
 			return student, nil
@@ -134,7 +134,7 @@ func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*models.Stud
 /* --------------------------- */
 
 // IMPLEMENT CRUD SCORE
-func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScore) error {
+func (r *InMemoStudentRepo) AddScore(studentID string, score *studentModels.SubjectScore) error {
 
 	student, existed := r.students[studentID]
 
@@ -147,7 +147,7 @@ func (r *InMemoStudentRepo) AddScore(studentID string, score *models.SubjectScor
 	return r.saveFile()
 }
 
-func (r *InMemoStudentRepo) UpdateScore(studentID string, score *models.SubjectScore) error {
+func (r *InMemoStudentRepo) UpdateScore(studentID string, score *studentModels.SubjectScore) error {
 	student, existed := r.students[studentID]
 
 	if !existed {
@@ -182,7 +182,7 @@ func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 }
 
 /*
-student.Scores = []*models.SubjectScore{
+student.Scores = []*student.SubjectScore{
 	{Subject: "Toan", Score: 7.5}		i
 	{Subject: "Tieng Anh", Score: 8}	i+1
 	{Subject: "Tieng Viet", Score: 6}	i+2
@@ -192,7 +192,7 @@ student.Scores = []*models.SubjectScore{
 }
 */
 
-func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error) {
+func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*studentModels.SubjectScore, error) {
 
 	student, existed := r.students[studentID]
 
@@ -203,7 +203,7 @@ func (r *InMemoStudentRepo) GetScoresByStudentID(studentID string) ([]*models.Su
 	return student.Scores, nil
 }
 
-func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error) {
+func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*studentModels.SubjectScore, error) {
 	student, existed := r.students[studentID]
 
 	if !existed {
@@ -221,8 +221,8 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*mode
 /* ------------------------- */
 
 // PREDICATE FOR FILTER
-func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error) {
-	result := []*models.Student{}
+func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*studentModels.Student, error) {
+	result := []*studentModels.Student{}
 
 	for _, s := range r.students {
 		if !p(s) {
@@ -236,7 +236,7 @@ func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*mod
 /* ----------------------------- */
 
 // BULK ADD STUDENTS (CSV)
-func (r *InMemoStudentRepo) BulkAddStudents(students []*models.Student) error {
+func (r *InMemoStudentRepo) BulkAddStudents(students []*studentModels.Student) error {
 	if len(students) == 0 {
 		return nil
 	}

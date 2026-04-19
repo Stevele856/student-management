@@ -1,5 +1,5 @@
 // Service → required validation + business rule
-package services
+package student
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/student-management/internal/models/student"
 	"github.com/student-management/internal/predicate"
 	"github.com/student-management/internal/repositories/student"
@@ -14,11 +15,11 @@ import (
 )
 
 type StudentService struct {
-	repo repositories.StudentRepository
+	repo studentRepo.StudentRepository
 }
 
 // CONSTRUCTOR
-func NewStudentService(repo repositories.StudentRepository) *StudentService {
+func NewStudentService(repo studentRepo.StudentRepository) *StudentService {
 	return &StudentService{repo: repo}
 }
 
@@ -55,7 +56,7 @@ var (
 )
 
 // ADD STUDENT
-func (s *StudentService) AddStudent(student *models.Student) error {
+func (s *StudentService) AddStudent(student *studentModels.Student) error {
 
 	if student == nil {
 		return ErrStudentData
@@ -81,7 +82,7 @@ func (s *StudentService) AddStudent(student *models.Student) error {
 }
 
 // UPDATE STUDENT
-func (s *StudentService) UpdateStudent(student *models.Student) error {
+func (s *StudentService) UpdateStudent(student *studentModels.Student) error {
 
 	if student == nil {
 		return ErrStudentData
@@ -137,12 +138,12 @@ func (s *StudentService) DeleteStudent(studentID string) error {
 }
 
 // GET ALL STUDENT
-func (s *StudentService) GetAllStudents() ([]*models.Student, error) {
+func (s *StudentService) GetAllStudents() ([]*studentModels.Student, error) {
 	return s.repo.GetAllStudents()
 }
 
 // GET STUDENT BY ID
-func (s *StudentService) GetStudentByID(studentID string) (*models.Student, error) {
+func (s *StudentService) GetStudentByID(studentID string) (*studentModels.Student, error) {
 	studentID = strings.TrimSpace(studentID)
 	if studentID == "" {
 		return nil, ErrIDRequired
@@ -151,7 +152,7 @@ func (s *StudentService) GetStudentByID(studentID string) (*models.Student, erro
 }
 
 // GET STUDENT BY EMAIL
-func (s *StudentService) GetStudentByEmail(studentEmail string) (*models.Student, error) {
+func (s *StudentService) GetStudentByEmail(studentEmail string) (*studentModels.Student, error) {
 	studentEmail = strings.TrimSpace(studentEmail)
 	if studentEmail == "" {
 		return nil, ErrEmailRequired
@@ -165,7 +166,7 @@ func (s *StudentService) GetStudentByEmail(studentEmail string) (*models.Student
 /* ------------------------ */
 
 // ADD SUBJECT SCORE
-func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) error {
+func (s *StudentService) AddScore(studentID string, score *studentModels.SubjectScore) error {
 
 	studentID, score = normalizeScore(studentID, score)
 
@@ -190,7 +191,7 @@ func (s *StudentService) AddScore(studentID string, score *models.SubjectScore) 
 }
 
 // UPDATE SCORE
-func (s *StudentService) UpdateScore(studentID string, score *models.SubjectScore) error {
+func (s *StudentService) UpdateScore(studentID string, score *studentModels.SubjectScore) error {
 	studentID, score = normalizeScore(studentID, score)
 
 	if err := validateScore(studentID, score); err != nil {
@@ -238,7 +239,7 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 }
 
 // GET SCORE BY STUDENT ID
-func (s *StudentService) GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error) {
+func (s *StudentService) GetScoresByStudentID(studentID string) ([]*studentModels.SubjectScore, error) {
 	studentID = strings.TrimSpace(studentID)
 
 	if studentID == "" {
@@ -258,7 +259,7 @@ func (s *StudentService) GetScoresByStudentID(studentID string) ([]*models.Subje
 }
 
 // GET SCORE BY SUBJECT
-func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error) {
+func (s *StudentService) GetScoresBySubject(studentID, subject string) (*studentModels.SubjectScore, error) {
 	studentID, subject = normalizeSubject(studentID, subject)
 
 	if err := validateSubject(studentID, subject); err != nil {
@@ -279,7 +280,7 @@ func (s *StudentService) GetScoresBySubject(studentID, subject string) (*models.
 }
 
 // FILTER STUDENTS
-func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*models.Student, error) {
+func (s *StudentService) FilterStudents(filter *studentModels.FilterStudents) ([]*studentModels.Student, error) {
 	if filter == nil {
 		return s.repo.GetAllStudents()
 	}
@@ -297,7 +298,7 @@ func (s *StudentService) FilterStudents(filter *models.FilterStudents) ([]*model
 
 }
 
-func normalizeStudent(s *models.Student) *models.Student {
+func normalizeStudent(s *studentModels.Student) *studentModels.Student {
 	cp := *s
 	cp.FullName = strings.TrimSpace(cp.FullName)
 	cp.Email = strings.ToLower(strings.TrimSpace(cp.Email))
@@ -305,7 +306,7 @@ func normalizeStudent(s *models.Student) *models.Student {
 	return &cp
 }
 
-func validateStudent(student *models.Student) error {
+func validateStudent(student *studentModels.Student) error {
 	if student.FullName == "" {
 		return ErrNameRequired
 	}
@@ -340,13 +341,13 @@ func validateStudent(student *models.Student) error {
 	return nil
 }
 
-func normalizeScore(studentID string, score *models.SubjectScore) (string, *models.SubjectScore) {
+func normalizeScore(studentID string, score *studentModels.SubjectScore) (string, *studentModels.SubjectScore) {
 	cp := *score
 	cp.Subject = strings.TrimSpace(cp.Subject)
 	return strings.TrimSpace(studentID), &cp
 }
 
-func validateScore(studentID string, score *models.SubjectScore) error {
+func validateScore(studentID string, score *studentModels.SubjectScore) error {
 	if studentID == "" {
 		return ErrIDRequired
 	}
@@ -363,7 +364,7 @@ func validateScore(studentID string, score *models.SubjectScore) error {
 	return nil
 }
 
-func validateAddScoreRules(student *models.Student, score *models.SubjectScore) error {
+func validateAddScoreRules(student *studentModels.Student, score *studentModels.SubjectScore) error {
 	if len(student.Scores) >= 10 {
 		return ErrMaxScore
 	}
@@ -377,7 +378,7 @@ func validateAddScoreRules(student *models.Student, score *models.SubjectScore) 
 	return nil
 }
 
-func validateSubjectExists(student *models.Student, subject string) error {
+func validateSubjectExists(student *studentModels.Student, subject string) error {
 
 	// CHECK DIBLICATE SUBJECT
 	for _, existing := range student.Scores {
@@ -408,7 +409,7 @@ func validateSubject(studentID, subject string) error {
 	return nil
 }
 
-func normalizeFilterStudent(filter *models.FilterStudents) *models.FilterStudents {
+func normalizeFilterStudent(filter *studentModels.FilterStudents) *studentModels.FilterStudents {
 	cp := *filter
 	cp.Name = strings.TrimSpace(cp.Name)
 	cp.Class = strings.TrimSpace(cp.Class)
@@ -417,7 +418,7 @@ func normalizeFilterStudent(filter *models.FilterStudents) *models.FilterStudent
 	return &cp
 }
 
-func validateFilterStudents(filter *models.FilterStudents) error {
+func validateFilterStudents(filter *studentModels.FilterStudents) error {
 	// VALIDATE NAME
 	if filter.Name != "" && !utils.IsValidStudentName(filter.Name) {
 		return ErrNameFormat
@@ -454,7 +455,7 @@ func validateFilterStudents(filter *models.FilterStudents) error {
 	return nil
 }
 
-func validateFilterScoreRange(filter *models.FilterStudents) error {
+func validateFilterScoreRange(filter *studentModels.FilterStudents) error {
 	// VALIDATE SCORE RANGE
 	if filter.MinAvgScore < 0 || filter.MinAvgScore > 10 ||
 		filter.MaxAvgScore < 0 || filter.MaxAvgScore > 10 {
@@ -469,7 +470,7 @@ func validateFilterScoreRange(filter *models.FilterStudents) error {
 	return nil
 }
 
-func validateStudentRank(filter *models.FilterStudents) error {
+func validateStudentRank(filter *studentModels.FilterStudents) error {
 	// VALIDATE STUDENT RANK
 	if filter.StudentRank != "" {
 		rank := strings.TrimSpace(string(filter.StudentRank))
@@ -480,7 +481,7 @@ func validateStudentRank(filter *models.FilterStudents) error {
 	return nil
 }
 
-func filterPredicateStudents(filter *models.FilterStudents) []predicate.PredicateStudent {
+func filterPredicateStudents(filter *studentModels.FilterStudents) []predicate.PredicateStudent {
 	predicates := []predicate.PredicateStudent{}
 
 	if filter.Name != "" {
@@ -510,13 +511,13 @@ func filterPredicateStudents(filter *models.FilterStudents) []predicate.Predicat
 }
 
 // BULK ADD STUDENTS
-func (s *StudentService) BulkAddStudents(students []*models.Student) error {
+func (s *StudentService) BulkAddStudents(students []*studentModels.Student) error {
 	if len(students) == 0 {
 		return nil
 	}
 
 	// Normalize and validate all students
-	validatedStudents := make([]*models.Student, len(students))
+	validatedStudents := make([]*studentModels.Student, len(students))
 	emailSet := make(map[string]bool) // Track emails within input for duplicates
 
 	for i, student := range students {

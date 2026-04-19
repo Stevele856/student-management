@@ -1,6 +1,6 @@
 // Step 2: interface
 
-package repositories
+package studentRepo
 
 import (
 	"github.com/student-management/internal/models/student"
@@ -10,23 +10,23 @@ import (
 type StudentRepository interface {
 
 	// CRUD student
-	AddStudent(student *models.Student) error
-	UpdateStudent(student *models.Student) error
+	AddStudent(student *studentModels.Student) error
+	UpdateStudent(student *studentModels.Student) error
 	DeleteStudent(studentID string) error
-	GetAllStudents() ([]*models.Student, error)
-	GetStudentByID(studentID string) (*models.Student, error)
-	GetStudentByEmail(StudentEmail string) (*models.Student, error)
+	GetAllStudents() ([]*studentModels.Student, error)
+	GetStudentByID(studentID string) (*studentModels.Student, error)
+	GetStudentByEmail(StudentEmail string) (*studentModels.Student, error)
 
 	// CRUD scores
-	AddScore(studentID string, score *models.SubjectScore) error
-	UpdateScore(studentID string, score *models.SubjectScore) error
+	AddScore(studentID string, score *studentModels.SubjectScore) error
+	UpdateScore(studentID string, score *studentModels.SubjectScore) error
 	DeleteScore(studentID, subject string) error
-	GetScoresByStudentID(studentID string) ([]*models.SubjectScore, error)
-	GetScoresBySubject(studentID, subject string) (*models.SubjectScore, error)
+	GetScoresByStudentID(studentID string) ([]*studentModels.SubjectScore, error)
+	GetScoresBySubject(studentID, subject string) (*studentModels.SubjectScore, error)
 
 	// Filter
-	FilterStudents(p predicate.PredicateStudent) ([]*models.Student, error)	
+	FilterStudents(p predicate.PredicateStudent) ([]*studentModels.Student, error)	
 
 	// CSV
-	BulkAddStudents(students []*models.Student) error
+	BulkAddStudents(students []*studentModels.Student) error
 }

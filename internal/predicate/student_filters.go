@@ -8,7 +8,7 @@ import (
 )
 
 func ByName(name string) PredicateStudent {
-	return func(s *models.Student) bool {
+	return func(s *studentModels.Student) bool {
 		return strings.Contains(
 			strings.ToLower(s.FullName),
 			strings.ToLower(name),
@@ -17,31 +17,31 @@ func ByName(name string) PredicateStudent {
 }
 
 func ByClass(class string) PredicateStudent {
-	return func(s *models.Student) bool {
+	return func(s *studentModels.Student) bool {
 		return strings.EqualFold(s.Class, class)
 	}
 }
 
 func ByYear(year int) PredicateStudent {
-	return func(s *models.Student) bool {
+	return func(s *studentModels.Student) bool {
 		return s.DateOfBirth.Year() == year
 	}
 }
 
 func ByGender(gender string) PredicateStudent {
-	return func(s *models.Student) bool {
+	return func(s *studentModels.Student) bool {
 		return strings.EqualFold(string(s.Gender), gender)
 	}
 }
 
 func ByAddress(address string) PredicateStudent {
-	return func(s *models.Student) bool {
+	return func(s *studentModels.Student) bool {
 		return strings.EqualFold(s.Address, address)
 	}
 }
 
 func ByAvgScore(min, max float64) PredicateStudent {
-	return func(s *models.Student) bool {
+	return func(s *studentModels.Student) bool {
 		avgScore := utils.CalAvgScore(s.Scores)
 
 		if min > 0 && avgScore < min {
@@ -54,8 +54,8 @@ func ByAvgScore(min, max float64) PredicateStudent {
 	}
 }
 
-func ByRank(rank models.Rank) PredicateStudent {
-	return func(s *models.Student) bool {
+func ByRank(rank studentModels.Rank) PredicateStudent {
+	return func(s *studentModels.Student) bool {
 		avgScore := utils.CalAvgScore(s.Scores)
 
 		return utils.CalcStudentRankBaseOnAvgScore(avgScore) == rank

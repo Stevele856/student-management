@@ -1,4 +1,4 @@
-package models
+package studentModels
 
 
 type FilterStudents struct {

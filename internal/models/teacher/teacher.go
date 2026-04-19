@@ -1,4 +1,4 @@
-package models
+package teacherModels
 
 import (
 	"time"
@@ -16,13 +16,13 @@ const (
 
 type Teacher struct {
 	// Basic info
-	ID          string    `json:"id"`
-	FullName    string    `json:"full_name"`
-	Email       string    `json:"email"`
-	DateOfBirth time.Time `json:"date_of_birth"`
-	Gender      models.Gender    `json:"gender"`
-	Address     string    `json:"address"`
-	Phone       string    `json:"phone"`
+	ID          string        `json:"id"`
+	FullName    string        `json:"full_name"`
+	Email       string        `json:"email"`
+	DateOfBirth time.Time     `json:"date_of_birth"`
+	Gender      models.Gender `json:"gender"`
+	Address     string        `json:"address"`
+	Phone       string        `json:"phone"`
 
 	// Professional info
 	EmployeeID    string   `json:"employee_id"`

@@ -1,4 +1,4 @@
-package services
+package student
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ func TestValidateStudent(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		student     *models.Student
+		student     *studentModels.Student
 		expectedErr error
 	}{
 		{
@@ -24,7 +24,7 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "empty fullname",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
 				s.FullName = ""
 				return s
@@ -34,7 +34,7 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "invalid name format",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
 				s.FullName = "Ng@e6n Va*n 4"
 				return s
@@ -44,7 +44,7 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "invalid email format",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
 				s.Email = "invalid-email"
 				return s
@@ -54,7 +54,7 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "empty email",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
 				s.Email = ""
 				return s
@@ -64,7 +64,7 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "future date of birth",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
 				s.DateOfBirth = now.AddDate(1, 1, 1)
 				return s
@@ -74,7 +74,7 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "class empty",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
 				s.Class = ""
 				return s
@@ -84,7 +84,7 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "error class format",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
 				s.Class = "10*A$2"
 				return s
@@ -94,9 +94,9 @@ func TestValidateStudent(t *testing.T) {
 
 		{
 			name: "score invalid",
-			student: func() *models.Student {
+			student: func() *studentModels.Student {
 				s := baseStudent()
-				s.Scores = []*models.SubjectScore{{Subject: "Toan", Score: 11}}
+				s.Scores = []*studentModels.SubjectScore{{Subject: "Toan", Score: 11}}
 				return s
 			}(),
 			expectedErr: ErrScore,
@@ -116,12 +116,12 @@ func TestNormalizeStudent(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		input               *models.Student
-		expectedStudentData *models.Student
+		input               *studentModels.Student
+		expectedStudentData *studentModels.Student
 	}{
 		{
 			name: "trim space in full name",
-			input: func() *models.Student {
+			input: func() *studentModels.Student {
 				s := baseStudent()
 				s.FullName = "  Nguyen Van A  "
 				return s
@@ -130,7 +130,7 @@ func TestNormalizeStudent(t *testing.T) {
 		},
 		{
 			name: "lowercase and trim email",
-			input: func() *models.Student {
+			input: func() *studentModels.Student {
 				s := baseStudent()
 				s.Email = "  VuLt@gmail.com "
 				return s
@@ -139,7 +139,7 @@ func TestNormalizeStudent(t *testing.T) {
 		},
 		{
 			name: "trim class",
-			input: func() *models.Student {
+			input: func() *studentModels.Student {
 				s := baseStudent()
 				s.Class = " 4A "
 				return s
@@ -179,7 +179,7 @@ func TestAddStudent(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		input       *models.Student
+		input       *studentModels.Student
 		mockRepo    *MockStudentRepository
 		expectedErr error
 	}{
@@ -191,7 +191,7 @@ func TestAddStudent(t *testing.T) {
 		},
 		{
 			name:        "validation failed",
-			input:       &models.Student{},
+			input:       &studentModels.Student{},
 			mockRepo:    &MockStudentRepository{},
 			expectedErr: ErrNameRequired,
 		},
@@ -199,7 +199,7 @@ func TestAddStudent(t *testing.T) {
 			name:  "email already existed",
 			input: validStudent,
 			mockRepo: &MockStudentRepository{
-				GetStudentByEmailFn: returnGetStudentByEmail(&models.Student{Email: validStudent.Email}),
+				GetStudentByEmailFn: returnGetStudentByEmail(&studentModels.Student{Email: validStudent.Email}),
 			},
 			expectedErr: ErrEmailExisted,
 		},
@@ -208,7 +208,7 @@ func TestAddStudent(t *testing.T) {
 			input: validStudent,
 			mockRepo: &MockStudentRepository{
 				GetStudentByEmailFn: returnDBError("not found"),
-				AddStudentFn: func(student *models.Student) error {
+				AddStudentFn: func(student *studentModels.Student) error {
 					if student.ID == "" {
 						t.Errorf("expected ID to be generated")
 					}
@@ -233,7 +233,7 @@ func TestUpdateStudent(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		input       *models.Student
+		input       *studentModels.Student
 		mockRepo    *MockStudentRepository
 		expectedErr error
 	}{
@@ -270,7 +270,7 @@ func TestUpdateStudent(t *testing.T) {
 			input: makeValidStudent("id-123"),
 			mockRepo: &MockStudentRepository{
 				GetStudentByIDFn:    returnGetStudentByID(makeValidStudent("id-123")),
-				GetStudentByEmailFn: returnGetStudentByEmail(&models.Student{ID: "other-id"}),
+				GetStudentByEmailFn: returnGetStudentByEmail(&studentModels.Student{ID: "other-id"}),
 			},
 			expectedErr: ErrEmailExisted,
 		},
@@ -279,8 +279,8 @@ func TestUpdateStudent(t *testing.T) {
 			input: makeValidStudent("id-123"),
 			mockRepo: &MockStudentRepository{
 				GetStudentByIDFn:    returnGetStudentByID(makeValidStudent("id-123")),
-				GetStudentByEmailFn: returnGetStudentByEmail(&models.Student{ID: "id-123"}),
-				UpdateStudentFn:     func(student *models.Student) error { return nil },
+				GetStudentByEmailFn: returnGetStudentByEmail(&studentModels.Student{ID: "id-123"}),
+				UpdateStudentFn:     func(student *studentModels.Student) error { return nil },
 			},
 			expectedErr: nil,
 		},
@@ -291,7 +291,7 @@ func TestUpdateStudent(t *testing.T) {
 			mockRepo: &MockStudentRepository{
 				GetStudentByIDFn:    returnGetStudentByID(makeValidStudent("id-123")),
 				GetStudentByEmailFn: returnGetStudentByEmail(nil),
-				UpdateStudentFn:     func(student *models.Student) error { return nil },
+				UpdateStudentFn:     func(student *studentModels.Student) error { return nil },
 			},
 			expectedErr: nil,
 		},
@@ -366,13 +366,13 @@ func TestGetAllStudents(t *testing.T) {
 	tests := []struct {
 		name             string
 		mockRepo         *MockStudentRepository
-		expectedStudents []*models.Student
+		expectedStudents []*studentModels.Student
 		expectedErr      error
 	}{
 		{
 			name: "repo return error",
 			mockRepo: &MockStudentRepository{
-				GetAllStudentsFn: func() ([]*models.Student, error) {
+				GetAllStudentsFn: func() ([]*studentModels.Student, error) {
 					return nil, ErrStudentData
 				},
 			},
@@ -383,26 +383,26 @@ func TestGetAllStudents(t *testing.T) {
 		{
 			name: "repo empty list",
 			mockRepo: &MockStudentRepository{
-				GetAllStudentsFn: func() ([]*models.Student, error) {
-					return []*models.Student{}, nil
+				GetAllStudentsFn: func() ([]*studentModels.Student, error) {
+					return []*studentModels.Student{}, nil
 				},
 			},
-			expectedStudents: []*models.Student{},
+			expectedStudents: []*studentModels.Student{},
 			expectedErr:      nil,
 		},
 
 		{
 			name: "repo return students",
 			mockRepo: &MockStudentRepository{
-				GetAllStudentsFn: func() ([]*models.Student, error) {
-					return []*models.Student{
+				GetAllStudentsFn: func() ([]*studentModels.Student, error) {
+					return []*studentModels.Student{
 						makeValidStudent("id-1"),
 						makeValidStudent("id-2"),
 						makeValidStudent("id-3"),
 					}, nil
 				},
 			},
-			expectedStudents: []*models.Student{
+			expectedStudents: []*studentModels.Student{
 				makeValidStudent("id-1"),
 				makeValidStudent("id-2"),
 				makeValidStudent("id-3"),
@@ -429,7 +429,7 @@ func TestGetStudentByID(t *testing.T) {
 		name            string
 		input           string
 		mockRepo        *MockStudentRepository
-		expectedStudent *models.Student
+		expectedStudent *studentModels.Student
 		expectedErr     error
 	}{
 		{
@@ -451,7 +451,7 @@ func TestGetStudentByID(t *testing.T) {
 			name:  "error GetStudentByID",
 			input: "id-123",
 			mockRepo: &MockStudentRepository{
-				GetStudentByIDFn: func(studentID string) (*models.Student, error) {
+				GetStudentByIDFn: func(studentID string) (*studentModels.Student, error) {
 					return nil, ErrStudentData
 				},
 			},
@@ -488,7 +488,7 @@ func TestGetStudentByEmail(t *testing.T) {
 		name            string
 		input           string
 		mockRepo        *MockStudentRepository
-		expectedStudent *models.Student
+		expectedStudent *studentModels.Student
 		expectedErr     error
 	}{
 		{
