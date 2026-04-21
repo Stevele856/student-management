@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	teacherModels "github.com/student-management/internal/models/teacher"
+	"github.com/student-management/internal/predicate"
 )
 
 type InMemoTeacherRepo struct {
@@ -115,7 +116,7 @@ func (r *InMemoTeacherRepo) GetTeacherByID(teacherID string) (*teacherModels.Tea
 	teacher, existed := r.teachers[teacherID]
 
 	if !existed {
-		return nil, fmt.Errorf("teacher with ID %s does not existed", teacherID)
+		return nil, ErrTeacherNotFound
 	}
 
 	return teacher, nil
@@ -128,24 +129,100 @@ func (r *InMemoTeacherRepo) GetTeacherByEmail(teacherEmail string) (*teacherMode
 		}
 	}
 
-	return nil, fmt.Errorf("teacher with email %s does not existed", teacherEmail)
+	return nil, ErrTeacherNotFound
 }
 
-func (r *InMemoTeacherRepo) GetTeacherAssignedBySubject(subject string) ([]*teacherModels.Teacher, error) {
+func (r *InMemoTeacherRepo) GetTeacherAssignedBySubject(subjectAssigned string) ([]*teacherModels.Teacher, error) {
 	result := []*teacherModels.Teacher{}
 
 	for _, teacher := range r.teachers {
 		for _, subj := range teacher.SubjectTaught {
-			if strings.EqualFold(subj, subject) {
+			if strings.EqualFold(subj, subjectAssigned) {
 				result = append(result, teacher)
 				break
 			}
 		}
 	}
 
-	if len(result) == 0 {
-		return nil, fmt.Errorf("no teachers found teaching subject %s", subject)
+	return result, nil
+}
+
+func (r *InMemoTeacherRepo) GetTeacherByAssignedClass(classAssigned string) ([]*teacherModels.Teacher, error) {
+	result := []*teacherModels.Teacher{}
+
+	for _, teacher := range r.teachers {
+		for _, class := range teacher.ClassAssigned {
+			if strings.EqualFold(class, classAssigned) {
+				result = append(result, teacher)
+				break
+			}
+		}
 	}
 
 	return result, nil
 }
+
+func (r *InMemoTeacherRepo) GetTeacherByStatus(status teacherModels.TeacherStatus) ([]*teacherModels.Teacher, error) {
+	result := []*teacherModels.Teacher{}
+
+	for _, teacher := range r.teachers {
+		if teacher.Status == status {
+			result = append(result, teacher)
+		}
+	}
+
+	return result, nil
+}
+
+func (r *InMemoTeacherRepo) GetTeacherByEmployeeID(employeeID string) (*teacherModels.Teacher, error) {
+	for _, teacher := range r.teachers {
+		if strings.EqualFold(teacher.EmployeeID, employeeID) {
+			return teacher, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (r *InMemoTeacherRepo) FilterTeachers(p predicate.PredicateTeacher) ([]*teacherModels.Teacher, error) {
+	if p == nil {
+		return r.GetAllTeacher()
+	}
+	
+	result := []*teacherModels.Teacher{}
+
+	for _, teacher := range r.teachers {
+		if !p(teacher) {
+			continue
+		}
+		result = append(result, teacher)
+	}
+
+	return result, nil
+}
+
+/*
+Nên flow chuẩn hay là:
+
+Repo trả lỗi kỹ thuật/sentinel (ErrNotFound)
+Service quyết định ngữ nghĩa nghiệp vụ (có thể map sang ErrBusiness...)
+Handler map lỗi service sang HTTP response.
+
+*Follow these step
+
+- Tạo file lỗi ở repo (internal/repositories/teacher/errors.go): khai báo ErrTeacherNotFound.
+- Sửa các hàm Get... ở teacher_repo_memory.go: khi không tìm thấy thì return nil, ErrTeacherNotFound.
+- Ở service teacher: dùng errors.Is(err, teacherRepo.ErrTeacherNotFound) để xử lý case nghiệp vụ.
+- Quyết định 1 trong 2 cách ở service:
+	1. Pass-through: trả thẳng teacherRepo.ErrTeacherNotFound. (* chọn cách này)
+		+ Codebase đang còn gọn, layer chưa quá phức tạp.
+		+ Giảm số lượng error type phải quản lý.
+		+ Triển khai nhanh, dễ đồng bộ với student.
+	2. Map domain: tạo teacherService.ErrTeacherNotFound rồi map sang lỗi này.
+- Ở handler: map lỗi NotFound thành 404, lỗi khác thành 500 (hoặc theo policy của bạn).
+- Viết test theo flow trên:
+	1. Repo test: không tìm thấy phải trả sentinel error.
+	2. Service test: verify map lỗi đúng.
+	3. Handler test: verify status code đúng.
+- Khi teacher ổn định, áp dụng cùng pattern cho student để đồng nhất toàn project.
+*/
