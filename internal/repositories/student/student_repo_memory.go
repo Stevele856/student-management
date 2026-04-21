@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/student-management/internal/models/student"
+	studentModels "github.com/student-management/internal/models/student"
 	"github.com/student-management/internal/predicate"
 )
 
@@ -222,13 +222,17 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*stud
 
 // PREDICATE FOR FILTER
 func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*studentModels.Student, error) {
+	if p == nil {
+		return r.GetAllStudents()
+	}
+
 	result := []*studentModels.Student{}
 
-	for _, s := range r.students {
-		if !p(s) {
+	for _, student := range r.students {
+		if !p(student) {
 			continue
 		}
-		result = append(result, s)
+		result = append(result, student)
 	}
 	return result, nil
 }
