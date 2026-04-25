@@ -4,6 +4,8 @@ import "errors"
 
 var (
 	ErrTeacherNotFound = errors.New("teacher not found")
+	ErrInvalidPage = errors.New("invalid page")
+	ErrInvalidPageSize = errors.New("invalid page size")
 )
 
 /*

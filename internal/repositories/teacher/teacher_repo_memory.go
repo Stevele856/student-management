@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
-	teacherModels "github.com/student-management/internal/models/teacher"
+	"github.com/student-management/internal/models/teacher"
 	"github.com/student-management/internal/predicate"
 )
 
@@ -181,14 +182,14 @@ func (r *InMemoTeacherRepo) GetTeacherByEmployeeID(employeeID string) (*teacherM
 		}
 	}
 
-	return nil, nil
+	return nil, ErrTeacherNotFound
 }
 
 func (r *InMemoTeacherRepo) FilterTeachers(p predicate.PredicateTeacher) ([]*teacherModels.Teacher, error) {
 	if p == nil {
 		return r.GetAllTeacher()
 	}
-	
+
 	result := []*teacherModels.Teacher{}
 
 	for _, teacher := range r.teachers {
@@ -199,6 +200,39 @@ func (r *InMemoTeacherRepo) FilterTeachers(p predicate.PredicateTeacher) ([]*tea
 	}
 
 	return result, nil
+}
+
+func (r *InMemoTeacherRepo) GetTeachersPaginated(page, pageSize int) ([]*teacherModels.Teacher, int, error) {
+	if page < 1 {
+		return nil, 0, ErrInvalidPage
+	}
+	if pageSize < 1 {
+		return nil, 0, ErrInvalidPageSize
+	}
+
+	teachers := make([]*teacherModels.Teacher, 0, len(r.teachers))
+	for _, teacher := range r.teachers {
+		teachers = append(teachers, teacher)
+	}
+
+	// map iteration trong Go không ổn định, nên sort để pagination nhất quán
+	sort.Slice(teachers, func(i, j int) bool {
+		return teachers[i].ID < teachers[j].ID
+	})
+
+	total := len(teachers)
+	start := (page - 1) * pageSize
+
+	if start > total{
+		return []*teacherModels.Teacher{}, total, nil
+	}
+
+	end := start + pageSize
+	if end > total {
+		end = total
+	}
+
+	return teachers[start:end], total, nil
 }
 
 /*

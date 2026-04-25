@@ -4,11 +4,12 @@ package utils
 import (
 	"net/mail"
 	"regexp"
+	"strings"
 
-	"github.com/student-management/internal/models/student"
+	studentModels "github.com/student-management/internal/models/student"
 )
 
-func IsValidStudentEmail(email string) bool {
+func IsValidEmail(email string) bool {
 	if len(email) == 0 || len(email) > 254 {
 		return false
 	}
@@ -17,18 +18,16 @@ func IsValidStudentEmail(email string) bool {
 	return err == nil
 }
 
+var validName = regexp.MustCompile(`^[\p{L}]+(?:[\s'-][\p{L}]+)*$`)
 
-var studentName = regexp.MustCompile(`^[\p{L}]+(?:[\s'-][\p{L}]+)*$`)
-func IsValidStudentName(name string) bool {
+func IsValidName(name string) bool {
 
 	if len(name) < 3 || len(name) > 50 {
 		return false
 	}
 
-	return studentName.MatchString(name)
+	return validName.MatchString(name)
 }
-
-
 
 var studentClass = regexp.MustCompile(`^\d{1,2}-?[A-Z]$`)
 func IsValidClass(class string) bool {
@@ -42,13 +41,12 @@ func IsValidScores(scores []*studentModels.SubjectScore) bool {
 	}
 
 	for _, s := range scores {
-		if !IsValidSubjectScore(s.Score){
+		if !IsValidSubjectScore(s.Score) {
 			return false
 		}
 	}
 	return true
 }
-
 
 func IsValidSubjectScore(score float64) bool {
 	return score >= 0 && score <= 10
@@ -59,7 +57,6 @@ func IsValidSubject(subject string) bool {
 	return studentSubject.MatchString(subject)
 
 }
-
 
 func CalAvgScore(scores []*studentModels.SubjectScore) float64 {
 	if len(scores) == 0 {
@@ -74,7 +71,6 @@ func CalAvgScore(scores []*studentModels.SubjectScore) float64 {
 	return total / float64(len(scores))
 }
 
-
 func CalcStudentRankBaseOnAvgScore(avg float64) studentModels.Rank {
 	switch {
 	case avg >= 9.0:
@@ -88,8 +84,21 @@ func CalcStudentRankBaseOnAvgScore(avg float64) studentModels.Rank {
 	}
 }
 
+var validEmployeeIDPattern = regexp.MustCompile(`^T\d{3}$`)
 
+func IsValidEmployeeID(employeeID string) bool {
+	employeeID = strings.TrimSpace(employeeID)
+	return validEmployeeIDPattern.MatchString(employeeID)
+}
 
+var validPhoneNumber = regexp.MustCompile(`^(0|\+84)(3|5|7|8|9)[0-9]{8}$`)
 
+func IsValidPhoneNumber(phone string) bool {
+	phone = strings.TrimSpace(phone)
+	phone = strings.ReplaceAll(phone, " ", "")
+	phone = strings.ReplaceAll(phone, "-", "")
+	phone = strings.ReplaceAll(phone, ".", "")
+	return validPhoneNumber.MatchString(phone)
+}
 
 

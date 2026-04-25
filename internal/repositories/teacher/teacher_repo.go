@@ -17,8 +17,8 @@ type TeacherRepository interface {
 	GetTeacherAssignedBySubject(subject string) ([]*teacherModels.Teacher, error)
 	GetTeacherByAssignedClass(classAssigned string) ([]*teacherModels.Teacher, error)
 	GetTeacherByStatus(status string) ([]*teacherModels.Teacher, error)
-
+	GetTeacherByEmployeeID(employeeID string) (*teacherModels.Teacher, error)
 	FilterTeachers(p predicate.PredicateTeacher) ([]*teacherModels.Teacher, error)
-	// GetTeachersWithPagination(page, pageSize int) ([]*teacherModels.Teacher, int, error)
+	GetTeachersPaginated(page, pageSize int) ([]*teacherModels.Teacher, int, error)
 }
 
