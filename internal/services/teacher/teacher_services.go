@@ -42,6 +42,7 @@ var (
 	ErrClassDuplicate           = errors.New("class being dublicated for this teacher")
 	ErrTeacherEmailExisted      = errors.New("teacher email already existed")
 	ErrTeacherEmployeeIDExisted = errors.New("teacher employee ID already existed")
+	ErrTeacherIDRequired = errors.New("teacher ID required")
 )
 
 // ADD TEACHER
@@ -86,6 +87,59 @@ func (t *TeacherService) AddTeacher(teacher *teacherModels.Teacher) error {
 	teacher.UpdatedAt = now
 
 	return t.repo.AddTeacher(teacher)
+}
+
+// UPDATE TEACHER
+func (t *TeacherService) UpdateTeacher(teacher *teacherModels.Teacher) error {
+	if teacher == nil {
+		return ErrTeacherData
+	}
+
+	teacher.ID = strings.TrimSpace(teacher.ID)
+	if teacher.ID == ""{
+		return ErrTeacherIDRequired
+	}
+	
+	existing, err := t.repo.GetTeacherByID(teacher.ID)
+	if err != nil{
+		return err
+	}
+
+	teacher = normalizeTeacher(teacher)
+
+	// Preserve system fields from old record
+	teacher.ID = existing.ID
+	teacher.CreatedAt = existing.CreatedAt
+	if teacher.PasswordHash == ""{
+		teacher.PasswordHash = existing.PasswordHash
+	}
+
+	if err := validateTeacher(teacher); err != nil {
+		return err
+	}
+
+	existedEmail, err := t.repo.GetTeacherByEmail(teacher.Email)
+	if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound){
+		return err
+	}
+
+	if err == nil && existedEmail != nil && existedEmail.ID != teacher.ID{
+		return ErrTeacherEmailExisted
+	}
+
+	existedEmployeeID, err := t.repo.GetTeacherByEmployeeID(teacher.EmployeeID)
+	if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound){
+		return err
+	}
+
+	if err == nil && existedEmployeeID != nil && existedEmployeeID.ID != teacher.EmployeeID{
+		return ErrTeacherEmployeeIDExisted
+	}
+
+	teacher.UpdatedAt = time.Now().UTC()
+
+	return t.repo.UpdateTeacher(teacher)
+
 }
 
 // STANDARD DATA

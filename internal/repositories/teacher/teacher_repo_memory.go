@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/student-management/internal/models/teacher"
+	teacherModels "github.com/student-management/internal/models/teacher"
 	"github.com/student-management/internal/predicate"
 )
 
@@ -43,7 +43,7 @@ func (r *InMemoTeacherRepo) loadFile() error {
 // SAVE JSON
 
 func (r *InMemoTeacherRepo) saveFile() error {
-	var teacherData []*teacherModels.Teacher
+	teacherData := []*teacherModels.Teacher{}
 
 	for _, teacher := range r.teachers {
 		teacherData = append(teacherData, teacher)
@@ -81,16 +81,21 @@ func (r *InMemoTeacherRepo) AddTeacher(teacher *teacherModels.Teacher) error {
 	}
 
 	r.teachers[teacher.ID] = teacher
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save teacher add: %w", err)
+	}
 	return r.saveFile()
 }
 
 func (r *InMemoTeacherRepo) UpdateTeacher(teacher *teacherModels.Teacher) error {
 	if _, existed := r.teachers[teacher.ID]; !existed {
-		return fmt.Errorf("teacher with ID %s does not existed", teacher.ID)
+		return ErrTeacherNotFound
 	}
 
 	r.teachers[teacher.ID] = teacher
-
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save teacher update: %w", err)
+	}
 	return r.saveFile()
 }
 
@@ -100,6 +105,9 @@ func (r *InMemoTeacherRepo) DeleteTeacher(teacherID string) error {
 	}
 
 	delete(r.teachers, teacherID)
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save teacher delete: %w", err)
+	}
 	return r.saveFile()
 }
 
@@ -223,7 +231,7 @@ func (r *InMemoTeacherRepo) GetTeachersPaginated(page, pageSize int) ([]*teacher
 	total := len(teachers)
 	start := (page - 1) * pageSize
 
-	if start > total{
+	if start > total {
 		return []*teacherModels.Teacher{}, total, nil
 	}
 
