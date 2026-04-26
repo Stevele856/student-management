@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/student-management/internal/models"
 	teacherModels "github.com/student-management/internal/models/teacher"
 	teacherRepo "github.com/student-management/internal/repositories/teacher"
 	"github.com/student-management/pkg/utils"
@@ -42,7 +41,7 @@ var (
 	ErrClassDuplicate           = errors.New("class being dublicated for this teacher")
 	ErrTeacherEmailExisted      = errors.New("teacher email already existed")
 	ErrTeacherEmployeeIDExisted = errors.New("teacher employee ID already existed")
-	ErrTeacherIDRequired = errors.New("teacher ID required")
+	ErrTeacherIDRequired        = errors.New("teacher ID required")
 )
 
 // ADD TEACHER
@@ -56,22 +55,8 @@ func (t *TeacherService) AddTeacher(teacher *teacherModels.Teacher) error {
 		return err
 	}
 
-	existed, err := t.repo.GetTeacherByEmail(teacher.Email)
-	if err == nil && existed != nil {
-		return ErrTeacherEmailExisted
-	}
-	// DB/Network
-	if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound) {
+	if err := t.ensureTeacherUnique(teacher.Email, teacher.EmployeeID, ""); err != nil {
 		return err
-	}
-
-	// Unique Employee ID
-	existed, err = t.repo.GetTeacherByEmployeeID(teacher.EmployeeID)
-	if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound) {
-		return err
-	}
-	if err == nil && existed != nil {
-		return ErrTeacherEmployeeIDExisted
 	}
 
 	if teacher.ID == "" {
@@ -95,45 +80,31 @@ func (t *TeacherService) UpdateTeacher(teacher *teacherModels.Teacher) error {
 		return ErrTeacherData
 	}
 
-	teacher.ID = strings.TrimSpace(teacher.ID)
-	if teacher.ID == ""{
-		return ErrTeacherIDRequired
+	teacherID, err := t.requireTeacherID(teacher.ID)
+	if err != nil {
+		return err
 	}
-	
-	existing, err := t.repo.GetTeacherByID(teacher.ID)
-	if err != nil{
+
+	existingTeacher, err := t.ensureTeacherExistsByID(teacherID)
+	if err != nil {
 		return err
 	}
 
 	teacher = normalizeTeacher(teacher)
 
 	// Preserve system fields from old record
-	teacher.ID = existing.ID
-	teacher.CreatedAt = existing.CreatedAt
-	if teacher.PasswordHash == ""{
-		teacher.PasswordHash = existing.PasswordHash
+	teacher.ID = existingTeacher.ID
+	teacher.CreatedAt = existingTeacher.CreatedAt
+	if teacher.PasswordHash == "" {
+		teacher.PasswordHash = existingTeacher.PasswordHash
 	}
 
 	if err := validateTeacher(teacher); err != nil {
 		return err
 	}
 
-	existedEmail, err := t.repo.GetTeacherByEmail(teacher.Email)
-	if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound){
+	if err := t.ensureTeacherUnique(teacher.Email, teacher.EmployeeID, teacher.ID); err != nil {
 		return err
-	}
-
-	if err == nil && existedEmail != nil && existedEmail.ID != teacher.ID{
-		return ErrTeacherEmailExisted
-	}
-
-	existedEmployeeID, err := t.repo.GetTeacherByEmployeeID(teacher.EmployeeID)
-	if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound){
-		return err
-	}
-
-	if err == nil && existedEmployeeID != nil && existedEmployeeID.ID != teacher.EmployeeID{
-		return ErrTeacherEmployeeIDExisted
 	}
 
 	teacher.UpdatedAt = time.Now().UTC()
@@ -142,135 +113,109 @@ func (t *TeacherService) UpdateTeacher(teacher *teacherModels.Teacher) error {
 
 }
 
-// STANDARD DATA
-func normalizeTeacher(teacher *teacherModels.Teacher) *teacherModels.Teacher {
-	if teacher == nil {
-		return nil
+// DELELTE TEACHER
+func (t *TeacherService) DeleteTeacher(teacherID string) error {
+	teacherID, err := t.requireTeacherID(teacherID)
+	if err != nil {
+		return err
 	}
-	t := *teacher
-	t.ID = strings.TrimSpace(t.ID)
-	t.FullName = strings.TrimSpace(t.FullName)
-	t.Email = strings.ToLower(strings.TrimSpace(t.Email))
-	t.Address = strings.TrimSpace(t.Address)
-	t.Phone = strings.TrimSpace(t.Phone)
-
-	t.EmployeeID = strings.ToUpper(strings.TrimSpace(t.EmployeeID))
-	for i := range t.SubjectTaught {
-		t.SubjectTaught[i] = strings.TrimSpace(t.SubjectTaught[i])
+	if _, err := t.ensureTeacherExistsByID(teacherID); err != nil {
+		return err
 	}
 
-	for i := range t.ClassAssigned {
-		t.ClassAssigned[i] = strings.TrimSpace(t.ClassAssigned[i])
-	}
-	t.Status = teacherModels.TeacherStatus(strings.ToLower(strings.TrimSpace(string(t.Status))))
-
-	return &t
+	return t.repo.DeleteTeacher(teacherID)
 }
 
-func validateTeacher(teacher *teacherModels.Teacher) error {
-	if teacher == nil {
-		return ErrTeacherData
-	}
-
-	if teacher.FullName == "" {
-		return ErrNameRequired
-	}
-
-	if teacher.Email == "" {
-		return ErrEmailRequired
-	}
-
-	if !utils.IsValidEmail(teacher.Email) {
-		return ErrEmailFormat
-	}
-
-	if teacher.Gender != models.GenderMale && teacher.Gender != models.GenderFemale {
-		return ErrTeacherGender
-	}
-
-	if !utils.IsValidName(teacher.FullName) {
-		return ErrNameFormat
-	}
-
-	if teacher.DateOfBirth.IsZero() || teacher.DateOfBirth.After(time.Now()) {
-		return ErrValidDOB
-	}
-
-	if teacher.Status != teacherModels.Active && teacher.Status != teacherModels.Inactive && teacher.Status != teacherModels.OnLeave {
-		return ErrTeacherStatus
-	}
-
-	if teacher.EmployeeID == "" || !utils.IsValidEmployeeID(teacher.EmployeeID) {
-		return ErrEmployeeID
-	}
-
-	if teacher.Phone == "" || !utils.IsValidPhoneNumber(teacher.Phone) {
-		return ErrFormatPhoneNumber
-	}
-
-	if len(teacher.SubjectTaught) == 0 {
-		return ErrSubjectRequired
-	}
-
-	// Check dublicate subject
-	uniqueSubject := make(map[string]struct{}, len(teacher.SubjectTaught))
-
-	for _, subj := range teacher.SubjectTaught {
-		if subj == "" {
-			return ErrSubjectRequired
-		}
-		if !utils.IsValidSubject(subj) {
-			return ErrSubjectFormat
-		}
-
-		subjectKey := strings.ToLower(strings.TrimSpace(subj))
-		if _, existed := uniqueSubject[subjectKey]; existed {
-			return ErrSubjectDuplicated
-		}
-		uniqueSubject[subjectKey] = struct{}{}
-	}
-
-	if len(teacher.ClassAssigned) == 0 {
-		return ErrClassRequired
-	}
-
-	// Check if dublicate Class
-	uniqueClassAssigned := make(map[string]struct{}, len(teacher.ClassAssigned))
-
-	for _, class := range teacher.ClassAssigned {
-		if class == "" {
-			return ErrClassRequired
-		}
-		if !utils.IsValidClass(class) {
-			return ErrClassFormat
-		}
-		classKey := strings.ToUpper(strings.TrimSpace(class))
-		if _, existed := uniqueClassAssigned[classKey]; existed {
-			return ErrClassDuplicate
-		}
-		uniqueClassAssigned[classKey] = struct{}{}
-	}
-
-	if teacher.HireDate.After(time.Now()) {
-		return ErrTeacherHireDate
-	}
-
-	if teacher.HireDate.Before(teacher.DateOfBirth) {
-		return ErrTeacherHireDate
-	}
-
-	if !IsValidHireTeacher(25, teacher) {
-		return ErrTeacherHireDate
-	}
-
-	return nil
+// GET ALL TEACHER
+func (t *TeacherService) GetAllTeacher() ([]*teacherModels.Teacher, error) {
+	return t.repo.GetAllTeacher()
 }
 
-func IsValidHireTeacher(minAge int, teacher *teacherModels.Teacher) bool {
-	if teacher == nil || teacher.DateOfBirth.IsZero() || teacher.HireDate.IsZero() {
-		return false
+// GET TEACHER BY ID
+func (t *TeacherService) GetTeacherByID(teacherID string) (*teacherModels.Teacher, error) {
+	teacherID, err := t.requireTeacherID(teacherID)
+	if err != nil {
+		return nil, err
+	}
+	existingTeacher, err := t.ensureTeacherExistsByID(teacherID)
+	if err != nil {
+		return nil, err
+	}
+	return existingTeacher, nil
+}
+
+func (t *TeacherService) GetTeacherByEmail(teacherEmail string) (*teacherModels.Teacher, error) {
+	teacherEmail = strings.ToLower(strings.TrimSpace(teacherEmail))
+
+	if teacherEmail == "" {
+		return nil, ErrEmailRequired
 	}
 
-	validAge := teacher.DateOfBirth.AddDate(minAge, 0, 0)
-	return !teacher.HireDate.Before(validAge)
+	if !utils.IsValidEmail(teacherEmail) {
+		return nil, ErrEmailFormat
+	}
+
+	existing, err := t.repo.GetTeacherByEmail(teacherEmail)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, teacherRepo.ErrTeacherNotFound
+	}
+
+	return existing, nil
+
 }
+
+// List query should return [] + nil - repo did it
+func (t *TeacherService) GetTeacherAssignedBySubject(subjectAssigned string) ([]*teacherModels.Teacher, error) {
+	subjectAssigned = strings.ToLower(strings.TrimSpace(subjectAssigned))
+	if subjectAssigned == "" {
+		return nil, ErrSubjectRequired
+	}
+	if !utils.IsValidSubject(subjectAssigned) {
+		return nil, ErrSubjectFormat
+	}
+
+	return t.repo.GetTeacherAssignedBySubject(subjectAssigned)
+}
+
+func (t *TeacherService) GetTeacherByAssignedClass(classAssigned string) ([]*teacherModels.Teacher, error) {
+	classAssigned = strings.ToUpper(strings.TrimSpace(classAssigned))
+	if classAssigned == "" {
+		return nil, ErrClassRequired
+	}
+	if !utils.IsValidClass(classAssigned) {
+		return nil, ErrClassFormat
+	}
+
+	return t.repo.GetTeacherByAssignedClass(classAssigned)
+}
+
+func (t *TeacherService) GetTeacherByStatus(status teacherModels.TeacherStatus) ([]*teacherModels.Teacher, error) {
+	status = teacherModels.TeacherStatus(strings.ToLower(strings.TrimSpace(string(status))))
+	if status != teacherModels.Active && status != teacherModels.Inactive && status != teacherModels.OnLeave {
+		return nil, ErrTeacherStatus
+	}
+	return t.repo.GetTeacherByStatus(status)
+}
+
+func (t *TeacherService) GetTeacherByEmployeeID(employeeID string) (*teacherModels.Teacher, error) {
+	employeeID = strings.ToUpper(strings.TrimSpace(employeeID))
+
+	if !utils.IsValidEmployeeID(employeeID) {
+		return nil, ErrEmployeeID
+	}
+
+	existing, err := t.repo.GetTeacherByEmployeeID(employeeID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, teacherRepo.ErrTeacherNotFound
+	}
+
+	return existing, nil
+}
+
+

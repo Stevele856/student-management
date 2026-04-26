@@ -101,7 +101,7 @@ func (r *InMemoTeacherRepo) UpdateTeacher(teacher *teacherModels.Teacher) error 
 
 func (r *InMemoTeacherRepo) DeleteTeacher(teacherID string) error {
 	if _, existed := r.teachers[teacherID]; !existed {
-		return fmt.Errorf("teacher with ID %s does not existed", teacherID)
+		return ErrTeacherNotFound
 	}
 
 	delete(r.teachers, teacherID)
