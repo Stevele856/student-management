@@ -6,8 +6,8 @@ type PredicateTeacher func(*teacherModels.Teacher) bool
 
 func AndTeacher(predicates ...PredicateTeacher) PredicateTeacher{
 	return func(s *teacherModels.Teacher) bool {
-		for _, predicate := range predicates{
-			if !predicate(s){
+		for _, p := range predicates{
+			if !p(s){
 				return false
 			}
 		}
