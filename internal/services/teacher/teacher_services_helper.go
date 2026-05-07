@@ -7,6 +7,8 @@ import (
 
 	"github.com/student-management/internal/models"
 	teacherModels "github.com/student-management/internal/models/teacher"
+	"github.com/student-management/internal/predicates"
+
 	teacherRepo "github.com/student-management/internal/repositories/teacher"
 	"github.com/student-management/pkg/utils"
 )
@@ -159,33 +161,131 @@ func (t *TeacherService) ensureTeacherUnique(email, employeeID, currentTeacherID
 
 	// Unique Employee ID
 	existed, err = t.repo.GetTeacherByEmployeeID(employeeID)
-	
+
 	// DB/Network
 	if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound) {
 		return err
 	}
-	if err == nil && existed != nil && existed.ID != currentTeacherID  {
+	if err == nil && existed != nil && existed.ID != currentTeacherID {
 		return ErrTeacherEmployeeIDExisted
 	}
 
 	return nil
 }
 
-func (t *TeacherService) requireTeacherID(teacherID string) (string, error){
+func (t *TeacherService) requireTeacherID(teacherID string) (string, error) {
 	teacherID = strings.TrimSpace(teacherID)
-	if teacherID == ""{
+	if teacherID == "" {
 		return "", ErrTeacherIDRequired
 	}
 	return teacherID, nil
 }
 
-func (t *TeacherService) ensureTeacherExistsByID(id string) (*teacherModels.Teacher, error){
+func (t *TeacherService) ensureTeacherExistsByID(id string) (*teacherModels.Teacher, error) {
 	existing, err := t.repo.GetTeacherByID(id)
 	if err != nil {
 		return nil, err
 	}
 	if existing == nil {
-		return nil,teacherRepo.ErrTeacherNotFound
+		return nil, teacherRepo.ErrTeacherNotFound
 	}
 	return existing, nil
+}
+
+func normalizeFilterTeacher(filter *teacherModels.FilterTeachers) *teacherModels.FilterTeachers {
+	if filter == nil {
+		return nil
+	}
+	tf := *filter
+	tf.Name = strings.TrimSpace(tf.Name)
+	tf.Gender = models.Gender(strings.ToLower(string(tf.Gender)))
+	tf.Email = strings.ToLower(strings.TrimSpace(tf.Email))
+	tf.Status = teacherModels.TeacherStatus(strings.ToLower(strings.TrimSpace(string(tf.Status))))
+	tf.EmployeeID = strings.ToUpper(strings.TrimSpace(tf.EmployeeID))
+	for i := range tf.SubjectTaught {
+		tf.SubjectTaught[i] = strings.TrimSpace(tf.SubjectTaught[i])
+	}
+
+	for i := range tf.ClassAssigned {
+		tf.ClassAssigned[i] = strings.TrimSpace(tf.ClassAssigned[i])
+	}
+
+	// if tf.HireDateFrom != nil && tf.HireDateTo != nil {
+	// 	tf.HireDateFrom.Before(*tf.HireDateTo)
+	// }
+
+	return &tf
+}
+
+func validateFilterTeachers(filter *teacherModels.FilterTeachers) error {
+	if filter.Name != "" && !utils.IsValidName(filter.Name) {
+		return ErrNameFormat
+	}
+	if filter.Gender != "" && filter.Gender != models.GenderMale && filter.Gender != models.GenderFemale {
+		return ErrTeacherGender
+	}
+	if filter.Email != "" && !utils.IsValidEmail(filter.Email) {
+		return ErrEmailFormat
+	}
+	if filter.EmployeeID != "" && !utils.IsValidEmployeeID(filter.EmployeeID) {
+		return ErrEmployeeID
+	}
+	if filter.Status != "" && filter.Status != teacherModels.Active && filter.Status != teacherModels.Inactive && filter.Status != teacherModels.OnLeave {
+		return ErrTeacherStatus
+	}
+	for _, class := range filter.ClassAssigned {
+		if !utils.IsValidClass(class) {
+			return ErrClassFormat
+		}
+	}
+
+	for _, subject := range filter.SubjectTaught {
+		if !utils.IsValidClass(subject) {
+			return ErrSubjectFormat
+		}
+	}
+
+	if filter.HireDateFrom != nil && filter.HireDateTo != nil {
+		if filter.HireDateFrom.After(*filter.HireDateTo) {
+			return errors.New("hire date from cannot be after hire date to")
+		}
+	}
+	return nil
+}
+
+func filterPredicateTeachers(filter *teacherModels.FilterTeachers) []predicates.PredicateTeacher {
+	predicate := []predicates.PredicateTeacher{}
+
+	if filter.Name != "" {
+		predicate = append(predicate, predicates.ByTeacherName(filter.Name))
+	}
+	if filter.Gender != "" {
+		predicate = append(predicate, predicates.ByTeacherGender(filter.Gender))
+	}
+	if filter.Email != ""{
+		predicate = append(predicate, predicates.ByTeacherEmail(filter.Email))
+	}
+	if filter.EmployeeID != "" {
+		predicate = append(predicate, predicates.ByEmployeeID(filter.EmployeeID))
+	}
+	if filter.Status != "" {
+		predicate = append(predicate, predicates.ByStatus(filter.Status))
+	}
+
+	for _, subject := range filter.SubjectTaught {
+		if subject != "" {
+			predicate = append(predicate, predicates.BySubjectTaught(subject))
+		}
+	}
+
+	for _, class := range filter.ClassAssigned {
+		if class != "" {
+			predicate = append(predicate, predicates.ByClassAssigned(class))
+		}
+	}
+
+	if filter.HireDateFrom != nil || filter.HireDateTo != nil {
+		predicate = append(predicate, predicates.ByHireDateRange(filter.HireDateFrom, filter.HireDateTo))
+	}
+	return predicate
 }

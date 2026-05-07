@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	teacherModels "github.com/student-management/internal/models/teacher"
+	"github.com/student-management/internal/predicates"
 	teacherRepo "github.com/student-management/internal/repositories/teacher"
 	"github.com/student-management/pkg/utils"
 )
@@ -219,3 +220,17 @@ func (t *TeacherService) GetTeacherByEmployeeID(employeeID string) (*teacherMode
 }
 
 
+func (t *TeacherService) FilterTeachers(filter *teacherModels.FilterTeachers) ([]*teacherModels.Teacher, error){
+	if filter == nil {
+		t.repo.GetAllTeacher()
+	}
+	filter = normalizeFilterTeacher(filter)
+
+	if err := validateFilterTeachers(filter); err != nil {
+		return nil, err
+	}
+
+	predicate := filterPredicateTeachers(filter)
+	return t.repo.FilterTeachers(predicates.AndTeacher(predicate...))
+	
+}

@@ -30,7 +30,7 @@ type Teacher struct {
 	ClassAssigned []string `json:"class_assigned"`
 
 	// metadata field
-	HireDate  time.Time `json:"hire_date"`
+	HireDate time.Time `json:"hire_date"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
