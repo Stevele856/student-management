@@ -128,8 +128,8 @@ func (t *TeacherService) DeleteTeacher(teacherID string) error {
 }
 
 // GET ALL TEACHER
-func (t *TeacherService) GetAllTeacher() ([]*teacherModels.Teacher, error) {
-	return t.repo.GetAllTeacher()
+func (t *TeacherService) GetAllTeachers() ([]*teacherModels.Teacher, error) {
+	return t.repo.GetAllTeachers()
 }
 
 // GET TEACHER BY ID
@@ -222,7 +222,7 @@ func (t *TeacherService) GetTeacherByEmployeeID(employeeID string) (*teacherMode
 
 func (t *TeacherService) FilterTeachers(filter *teacherModels.FilterTeachers) ([]*teacherModels.Teacher, error){
 	if filter == nil {
-		t.repo.GetAllTeacher()
+		return t.repo.GetAllTeachers()
 	}
 	filter = normalizeFilterTeacher(filter)
 

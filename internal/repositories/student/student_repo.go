@@ -4,7 +4,7 @@ package studentRepo
 
 import (
 	"github.com/student-management/internal/models/student"
-	"github.com/student-management/internal/predicate"
+	predicates "github.com/student-management/internal/predicates"
 )
 
 type StudentRepository interface {
@@ -25,7 +25,7 @@ type StudentRepository interface {
 	GetScoresBySubject(studentID, subject string) (*studentModels.SubjectScore, error)
 
 	// Filter
-	FilterStudents(p predicate.PredicateStudent) ([]*studentModels.Student, error)	
+	FilterStudents(p predicates.PredicateStudent) ([]*studentModels.Student, error)	
 
 	// CSV
 	BulkAddStudents(students []*studentModels.Student) error

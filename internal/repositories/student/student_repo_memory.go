@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	studentModels "github.com/student-management/internal/models/student"
-	"github.com/student-management/internal/predicate"
+	predicates "github.com/student-management/internal/predicates"
 )
 
 // CHECK IMPLEMENTATION FUNCTION WHETHER IT MATCH WITH INTERFACE
@@ -221,7 +221,7 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*stud
 /* ------------------------- */
 
 // PREDICATE FOR FILTER
-func (r *InMemoStudentRepo) FilterStudents(p predicate.PredicateStudent) ([]*studentModels.Student, error) {
+func (r *InMemoStudentRepo) FilterStudents(p predicates.PredicateStudent) ([]*studentModels.Student, error) {
 	if p == nil {
 		return r.GetAllStudents()
 	}

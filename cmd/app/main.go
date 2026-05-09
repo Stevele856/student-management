@@ -5,32 +5,50 @@ import (
 	"net/http"
 
 	"github.com/student-management/config"
-	"github.com/student-management/internal/handlers"
-	"github.com/student-management/internal/repositories/student"
-	"github.com/student-management/internal/services/student"
+
+	studentHandler "github.com/student-management/internal/handlers/student"
+	teacherHandler "github.com/student-management/internal/handlers/teacher"
+	studentRepo "github.com/student-management/internal/repositories/student"
+	teacherRepo "github.com/student-management/internal/repositories/teacher"
+	studentService "github.com/student-management/internal/services/student"
+	teacherService "github.com/student-management/internal/services/teacher"
 )
 
-func main(){
+func main() {
 	cfg := config.Load()
 
-	repo, err := studentRepo.NewStudentMemoryRepo(cfg.DataFile)
+	studentRepository, err := studentRepo.NewStudentMemoryRepo(cfg.DataFile)
 	if err != nil {
 		log.Fatalf("failed to initialize repository: %v", err)
 	}
 
-	service := student.NewStudentService(repo)
+	studentService := studentService.NewStudentService(studentRepository)
+	studentHandlers := studentHandler.NewStudentHandler(studentService)
+	studentRouter := studentHandler.NewRouter(*studentHandlers)
 
-	handler := handlers.NewStudentHandler(service)
+	teacherRepository, err := teacherRepo.NewTeacherMemoryRepo(cfg.DataFile)
+	if err != nil {
+		log.Fatalf("failed to initialize repository: %v", err)
+	}
 
-	router := handlers.NewRouter(*handler)
+	teacherService := teacherService.NewTeacherService(teacherRepository)
+	teacherHandlers := teacherHandler.NewTeacherHandler(teacherService)
+	teacherRouter := teacherHandler.NewRouter(*teacherHandlers)
+
+	rootMux := http.NewServeMux()
+	rootMux.Handle("/students", studentRouter)
+	rootMux.Handle("/teachers", teacherRouter)
+	rootMux.Handle("/students/", studentRouter)
+	rootMux.Handle("/teachers/", teacherRouter)
 
 	server := &http.Server{
-		Addr: ":" + cfg.Port,
-		Handler: router,
+		Addr:    ":" + cfg.Port,
+		Handler: rootMux,
 	}
 
 	log.Printf("server starting on port %s", cfg.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
+
 }

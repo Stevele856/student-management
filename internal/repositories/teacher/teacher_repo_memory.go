@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	teacherModels "github.com/student-management/internal/models/teacher"
-	"github.com/student-management/internal/predicate"
+	"github.com/student-management/internal/predicates"
 )
 
 type InMemoTeacherRepo struct {
@@ -111,7 +111,7 @@ func (r *InMemoTeacherRepo) DeleteTeacher(teacherID string) error {
 	return r.saveFile()
 }
 
-func (r *InMemoTeacherRepo) GetAllTeacher() ([]*teacherModels.Teacher, error) {
+func (r *InMemoTeacherRepo) GetAllTeachers() ([]*teacherModels.Teacher, error) {
 	teachers := make([]*teacherModels.Teacher, 0, len(r.teachers))
 
 	for _, teacher := range r.teachers {
@@ -193,9 +193,9 @@ func (r *InMemoTeacherRepo) GetTeacherByEmployeeID(employeeID string) (*teacherM
 	return nil, ErrTeacherNotFound
 }
 
-func (r *InMemoTeacherRepo) FilterTeachers(p predicate.PredicateTeacher) ([]*teacherModels.Teacher, error) {
+func (r *InMemoTeacherRepo) FilterTeachers(p predicates.PredicateTeacher) ([]*teacherModels.Teacher, error) {
 	if p == nil {
-		return r.GetAllTeacher()
+		return r.GetAllTeachers()
 	}
 
 	result := []*teacherModels.Teacher{}

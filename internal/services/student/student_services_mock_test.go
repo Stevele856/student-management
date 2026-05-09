@@ -2,7 +2,7 @@ package student
 
 import (
 	studentModels "github.com/student-management/internal/models/student"
-	"github.com/student-management/internal/predicate"
+	predicates "github.com/student-management/internal/predicates"
 )
 
 // Mock Student Repository, implement entire interface StudentRepository
@@ -22,7 +22,7 @@ type MockStudentRepository struct {
 	GetScoresByStudentIDFn func(studentID string) ([]*studentModels.SubjectScore, error)
 	GetScoresBySubjectFn   func(studentID, subject string) (*studentModels.SubjectScore, error)
 
-	FilterStudentsFn func(p predicate.PredicateStudent) ([]*studentModels.Student, error)
+	FilterStudentsFn func(p predicates.PredicateStudent) ([]*studentModels.Student, error)
 	// CSV
 	BulkAddStudentsFn func(students []*studentModels.Student) error
 }
@@ -72,7 +72,7 @@ func (m *MockStudentRepository) GetScoresBySubject(studentID, subject string) (*
 	return m.GetScoresBySubjectFn(studentID, subject)
 }
 
-func (m *MockStudentRepository) FilterStudents(p predicate.PredicateStudent) ([]*studentModels.Student, error){
+func (m *MockStudentRepository) FilterStudents(p predicates.PredicateStudent) ([]*studentModels.Student, error){
 	return m.FilterStudentsFn(p)
 }
 

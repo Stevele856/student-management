@@ -210,10 +210,6 @@ func normalizeFilterTeacher(filter *teacherModels.FilterTeachers) *teacherModels
 		tf.ClassAssigned[i] = strings.TrimSpace(tf.ClassAssigned[i])
 	}
 
-	// if tf.HireDateFrom != nil && tf.HireDateTo != nil {
-	// 	tf.HireDateFrom.Before(*tf.HireDateTo)
-	// }
-
 	return &tf
 }
 

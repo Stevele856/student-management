@@ -8,9 +8,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/student-management/internal/models/student"
-	"github.com/student-management/internal/predicate"
-	"github.com/student-management/internal/repositories/student"
+	"github.com/student-management/internal/models"
+	studentModels "github.com/student-management/internal/models/student"
+	predicates "github.com/student-management/internal/predicates"
+
+	studentRepo "github.com/student-management/internal/repositories/student"
 	"github.com/student-management/pkg/utils"
 )
 
@@ -157,7 +159,7 @@ func (s *StudentService) GetStudentByEmail(studentEmail string) (*studentModels.
 	if studentEmail == "" {
 		return nil, ErrEmailRequired
 	}
-	if !utils.IsValidStudentEmail(studentEmail) {
+	if !utils.IsValidEmail(studentEmail) {
 		return nil, ErrEmailFormat
 	}
 	return s.repo.GetStudentByEmail(studentEmail)
@@ -292,18 +294,22 @@ func (s *StudentService) FilterStudents(filter *studentModels.FilterStudents) ([
 	}
 
 	// PREDICATE STUDENT
-	predicates := filterPredicateStudents(filter)
+	predicate := filterPredicateStudents(filter)
 
-	return s.repo.FilterStudents(predicate.And(predicates...))
+	return s.repo.FilterStudents(predicates.AndStudent(predicate...))
 
 }
 
-func normalizeStudent(s *studentModels.Student) *studentModels.Student {
-	cp := *s
-	cp.FullName = strings.TrimSpace(cp.FullName)
-	cp.Email = strings.ToLower(strings.TrimSpace(cp.Email))
-	cp.Class = strings.TrimSpace(cp.Class)
-	return &cp
+func normalizeStudent(student *studentModels.Student) *studentModels.Student {
+	if student == nil {
+		return nil
+	}
+	s := *student
+	s.FullName = strings.TrimSpace(s.FullName)
+	s.Email = strings.ToLower(strings.TrimSpace(s.Email))
+	s.Class = strings.TrimSpace(s.Class)
+	s.Address = strings.TrimSpace(s.Address)
+	return &s
 }
 
 func validateStudent(student *studentModels.Student) error {
@@ -315,11 +321,11 @@ func validateStudent(student *studentModels.Student) error {
 		return ErrEmailRequired
 	}
 
-	if !utils.IsValidStudentName(student.FullName) {
+	if !utils.IsValidName(student.FullName) {
 		return ErrNameFormat
 	}
 
-	if !utils.IsValidStudentEmail(student.Email) {
+	if !utils.IsValidEmail(student.Email) {
 		return ErrEmailFormat
 	}
 
@@ -413,14 +419,14 @@ func normalizeFilterStudent(filter *studentModels.FilterStudents) *studentModels
 	cp := *filter
 	cp.Name = strings.TrimSpace(cp.Name)
 	cp.Class = strings.TrimSpace(cp.Class)
-	cp.Gender = strings.TrimSpace(cp.Gender)
+	cp.Gender = models.Gender(strings.ToLower(string(cp.Gender)))
 
 	return &cp
 }
 
 func validateFilterStudents(filter *studentModels.FilterStudents) error {
 	// VALIDATE NAME
-	if filter.Name != "" && !utils.IsValidStudentName(filter.Name) {
+	if filter.Name != "" && !utils.IsValidName(filter.Name) {
 		return ErrNameFormat
 	}
 
@@ -435,7 +441,7 @@ func validateFilterStudents(filter *studentModels.FilterStudents) error {
 	}
 
 	// VALIDATE GENDER
-	if filter.Gender != "" && filter.Gender != "male" && filter.Gender != "female" {
+	if filter.Gender != "" && filter.Gender != models.GenderMale && filter.Gender != models.GenderFemale {
 		return ErrInvalidGender
 	}
 
@@ -481,33 +487,33 @@ func validateStudentRank(filter *studentModels.FilterStudents) error {
 	return nil
 }
 
-func filterPredicateStudents(filter *studentModels.FilterStudents) []predicate.PredicateStudent {
-	predicates := []predicate.PredicateStudent{}
+func filterPredicateStudents(filter *studentModels.FilterStudents) []predicates.PredicateStudent {
+	predicate := []predicates.PredicateStudent{}
 
 	if filter.Name != "" {
-		predicates = append(predicates, predicate.ByName(filter.Name))
+		predicate = append(predicate, predicates.ByName(filter.Name))
 	}
 
 	if filter.Class != "" {
-		predicates = append(predicates, predicate.ByClass(filter.Class))
+		predicate = append(predicate, predicates.ByClass(filter.Class))
 	}
 
 	if filter.Gender != "" {
-		predicates = append(predicates, predicate.ByGender(filter.Gender))
+		predicate = append(predicate, predicates.ByGender(string(filter.Gender)))
 	}
 
 	if filter.Address != "" {
-		predicates = append(predicates, predicate.ByAddress(filter.Address))
+		predicate = append(predicate, predicates.ByAddress(filter.Address))
 	}
 
 	if filter.MinAvgScore > 0 && filter.MaxAvgScore > 0 {
-		predicates = append(predicates, predicate.ByAvgScore(filter.MinAvgScore, filter.MaxAvgScore))
+		predicate = append(predicate, predicates.ByAvgScore(filter.MinAvgScore, filter.MaxAvgScore))
 	}
 
 	if filter.StudentRank != "" {
-		predicates = append(predicates, predicate.ByRank(filter.StudentRank))
+		predicate = append(predicate, predicates.ByRank(filter.StudentRank))
 	}
-	return predicates
+	return predicate
 }
 
 // BULK ADD STUDENTS
