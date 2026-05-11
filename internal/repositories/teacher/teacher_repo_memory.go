@@ -84,7 +84,7 @@ func (r *InMemoTeacherRepo) AddTeacher(teacher *teacherModels.Teacher) error {
 	if err := r.saveFile(); err != nil {
 		return fmt.Errorf("save teacher add: %w", err)
 	}
-	return r.saveFile()
+	return nil
 }
 
 func (r *InMemoTeacherRepo) UpdateTeacher(teacher *teacherModels.Teacher) error {
@@ -96,7 +96,7 @@ func (r *InMemoTeacherRepo) UpdateTeacher(teacher *teacherModels.Teacher) error 
 	if err := r.saveFile(); err != nil {
 		return fmt.Errorf("save teacher update: %w", err)
 	}
-	return r.saveFile()
+	return nil
 }
 
 func (r *InMemoTeacherRepo) DeleteTeacher(teacherID string) error {
@@ -108,7 +108,7 @@ func (r *InMemoTeacherRepo) DeleteTeacher(teacherID string) error {
 	if err := r.saveFile(); err != nil {
 		return fmt.Errorf("save teacher delete: %w", err)
 	}
-	return r.saveFile()
+	return nil
 }
 
 func (r *InMemoTeacherRepo) GetAllTeachers() ([]*teacherModels.Teacher, error) {

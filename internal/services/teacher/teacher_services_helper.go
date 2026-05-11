@@ -236,7 +236,7 @@ func validateFilterTeachers(filter *teacherModels.FilterTeachers) error {
 	}
 
 	for _, subject := range filter.SubjectTaught {
-		if !utils.IsValidClass(subject) {
+		if !utils.IsValidSubject(subject) {
 			return ErrSubjectFormat
 		}
 	}
