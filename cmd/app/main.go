@@ -17,7 +17,7 @@ import (
 func main() {
 	cfg := config.Load()
 
-	studentRepository, err := studentRepo.NewStudentMemoryRepo(cfg.DataFile)
+	studentRepository, err := studentRepo.NewStudentMemoryRepo(cfg.StudentData)
 	if err != nil {
 		log.Fatalf("failed to initialize repository: %v", err)
 	}
@@ -26,7 +26,7 @@ func main() {
 	studentHandlers := studentHandler.NewStudentHandler(studentService)
 	studentRouter := studentHandler.NewRouter(*studentHandlers)
 
-	teacherRepository, err := teacherRepo.NewTeacherMemoryRepo(cfg.DataFile)
+	teacherRepository, err := teacherRepo.NewTeacherMemoryRepo(cfg.TeacherData)
 	if err != nil {
 		log.Fatalf("failed to initialize repository: %v", err)
 	}

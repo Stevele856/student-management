@@ -2,24 +2,31 @@ package config
 
 import "os"
 
-
 type Config struct {
-	Port string
-	DataFile string
+	Port        string
+	StudentData string
+	TeacherData string
 }
 
-func Load() *Config{
+func Load() *Config {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	dataFile := os.Getenv("DATA_FILE")
-	if dataFile == ""{
-		dataFile = "static/students.json"
+
+	StudentData := os.Getenv("STUDENT_DATA_FILE")
+	if StudentData == "" {
+		StudentData = "static/students.json"
+	}
+
+	TeacherData := os.Getenv("TEACHER_DATA_FILE")
+	if TeacherData == "" {
+		TeacherData = "static/teachers.json"
 	}
 
 	return &Config{
-		Port: port,
-		DataFile: dataFile,
+		Port:     port,
+		StudentData: StudentData,
+		TeacherData: TeacherData,
 	}
 }
