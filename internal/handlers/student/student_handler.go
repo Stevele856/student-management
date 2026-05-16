@@ -39,12 +39,12 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 func serviceErrToStatus(err error) int {
 	switch {
 	case errors.Is(err, student.ErrStudentNotFound),
-		errors.Is(err, student.ErrIDRequired),
+		errors.Is(err, student.ErrStudentIDRequired),
 		errors.Is(err, student.ErrStudentEmail),
 		errors.Is(err, student.ErrSubjectEmpty):
 		return http.StatusNotFound
 
-	case errors.Is(err, student.ErrEmailExisted),
+	case errors.Is(err, student.ErrStudentEmailExisted),
 		errors.Is(err, student.ErrSubjectAlreadyExisted),
 		errors.Is(err, student.ErrDublicatedSubject):
 		return http.StatusConflict
@@ -55,9 +55,9 @@ func serviceErrToStatus(err error) int {
 		errors.Is(err, student.ErrClassFormat),
 		errors.Is(err, student.ErrSubjectFormat),
 		errors.Is(err, student.ErrValidDOB),
-		errors.Is(err, student.ErrScore),
+		errors.Is(err, student.ErrScoreData),
 		errors.Is(err, student.ErrMaxScore),
-		errors.Is(err, student.ErrIDRequired),
+		errors.Is(err, student.ErrStudentIDRequired),
 		errors.Is(err, student.ErrNameRequired),
 		errors.Is(err, student.ErrStudentClass),
 		errors.Is(err, student.ErrInvalidYear),

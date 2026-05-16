@@ -14,19 +14,19 @@ func Load() *Config {
 		port = "8080"
 	}
 
-	StudentData := os.Getenv("STUDENT_DATA_FILE")
-	if StudentData == "" {
-		StudentData = "static/students.json"
+	studentData := os.Getenv("STUDENT_DATA_FILE")
+	if studentData == "" {
+		studentData = "static/students.json"
 	}
 
-	TeacherData := os.Getenv("TEACHER_DATA_FILE")
-	if TeacherData == "" {
-		TeacherData = "static/teachers.json"
+	teacherData := os.Getenv("TEACHER_DATA_FILE")
+	if teacherData == "" {
+		teacherData = "static/teachers.json"
 	}
 
 	return &Config{
 		Port:     port,
-		StudentData: StudentData,
-		TeacherData: TeacherData,
+		StudentData: studentData,
+		TeacherData: teacherData,
 	}
 }

@@ -99,7 +99,7 @@ func TestValidateStudent(t *testing.T) {
 				s.Scores = []*studentModels.SubjectScore{{Subject: "Toan", Score: 11}}
 				return s
 			}(),
-			expectedErr: ErrScore,
+			expectedErr: ErrScoreData,
 		},
 	}
 
@@ -201,7 +201,7 @@ func TestAddStudent(t *testing.T) {
 			mockRepo: &MockStudentRepository{
 				GetStudentByEmailFn: returnGetStudentByEmail(&studentModels.Student{Email: validStudent.Email}),
 			},
-			expectedErr: ErrEmailExisted,
+			expectedErr: ErrStudentEmailExisted,
 		},
 		{
 			name:  "success create student",
@@ -247,7 +247,7 @@ func TestUpdateStudent(t *testing.T) {
 			name:        "missing ID",
 			input:       makeValidStudent(""),
 			mockRepo:    &MockStudentRepository{},
-			expectedErr: ErrIDRequired,
+			expectedErr: ErrStudentIDRequired,
 		},
 		{
 			name:  "error GetStudentByID",
@@ -272,7 +272,7 @@ func TestUpdateStudent(t *testing.T) {
 				GetStudentByIDFn:    returnGetStudentByID(makeValidStudent("id-123")),
 				GetStudentByEmailFn: returnGetStudentByEmail(&studentModels.Student{ID: "other-id"}),
 			},
-			expectedErr: ErrEmailExisted,
+			expectedErr: ErrStudentEmailExisted,
 		},
 		{
 			name:  "email existed and same ID",
@@ -318,13 +318,13 @@ func TestDeleteStudent(t *testing.T) {
 			name:        "WhiteSpace ID",
 			input:       "   ",
 			mockRepo:    &MockStudentRepository{},
-			expectedErr: ErrIDRequired,
+			expectedErr: ErrStudentIDRequired,
 		},
 		{
 			name:        "missing ID",
 			input:       "",
 			mockRepo:    &MockStudentRepository{},
-			expectedErr: ErrIDRequired,
+			expectedErr: ErrStudentIDRequired,
 		},
 		{
 			name:  "error GetStudentByID",
@@ -437,14 +437,14 @@ func TestGetStudentByID(t *testing.T) {
 			input:           "   ",
 			mockRepo:        &MockStudentRepository{},
 			expectedStudent: nil,
-			expectedErr:     ErrIDRequired,
+			expectedErr:     ErrStudentIDRequired,
 		},
 		{
 			name:            "missing ID",
 			input:           "",
 			mockRepo:        &MockStudentRepository{},
 			expectedStudent: nil,
-			expectedErr:     ErrIDRequired,
+			expectedErr:     ErrStudentIDRequired,
 		},
 
 		{

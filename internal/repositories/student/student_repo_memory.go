@@ -79,29 +79,38 @@ func NewStudentMemoryRepo(filePath string) (*InMemoStudentRepo, error) {
 func (r *InMemoStudentRepo) AddStudent(student *studentModels.Student) error {
 
 	if _, existed := r.students[student.ID]; existed {
-		return fmt.Errorf("student with ID %s existed", student.ID)
+		return fmt.Errorf("student with ID %s already existed", student.ID)
 	}
 
 	r.students[student.ID] = student
-	return r.saveFile()
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save student add: %w", err)
+	}
+	return nil
 }
 
 func (r *InMemoStudentRepo) UpdateStudent(student *studentModels.Student) error {
 	if _, existed := r.students[student.ID]; !existed {
-		return fmt.Errorf("student with ID %s not existed", student.ID)
+		return ErrStudentNotFound
 	}
 
 	r.students[student.ID] = student
-	return r.saveFile()
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save student update: %w", err)
+	}
+	return nil
 }
 
 func (r *InMemoStudentRepo) DeleteStudent(studentID string) error {
 	if _, existed := r.students[studentID]; !existed {
-		return fmt.Errorf("student with ID %s does not exist", studentID)
+		return ErrStudentNotFound
 	}
 	delete(r.students, studentID)
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save student delete: %w", err)
+	}
 
-	return r.saveFile()
+	return nil
 }
 
 func (r *InMemoStudentRepo) GetAllStudents() ([]*studentModels.Student, error) {
@@ -116,7 +125,7 @@ func (r *InMemoStudentRepo) GetAllStudents() ([]*studentModels.Student, error) {
 func (r *InMemoStudentRepo) GetStudentByID(studentID string) (*studentModels.Student, error) {
 	student, existed := r.students[studentID]
 	if !existed {
-		return nil, fmt.Errorf("student with ID %s does not exist", studentID)
+		return nil, ErrStudentNotFound
 	}
 
 	return student, nil
@@ -128,7 +137,7 @@ func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*studentMode
 			return student, nil
 		}
 	}
-	return nil, fmt.Errorf("student with Email %s does not exist", studentEmail)
+	return nil, ErrStudentNotFound
 }
 
 /* --------------------------- */
@@ -137,14 +146,16 @@ func (r *InMemoStudentRepo) GetStudentByEmail(studentEmail string) (*studentMode
 func (r *InMemoStudentRepo) AddScore(studentID string, score *studentModels.SubjectScore) error {
 
 	student, existed := r.students[studentID]
-
 	if !existed {
-		return fmt.Errorf("student with ID %s does not exist", studentID)
+		return ErrStudentNotFound
 	}
-
 	student.Scores = append(student.Scores, score)
 
-	return r.saveFile()
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save student add score: %w", err)
+	}
+
+	return nil
 }
 
 func (r *InMemoStudentRepo) UpdateScore(studentID string, score *studentModels.SubjectScore) error {

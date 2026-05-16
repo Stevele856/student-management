@@ -33,6 +33,9 @@ type Student struct {
 	Class       string          `json:"class"`
 	Email       string          `json:"email"`
 	Scores      []*SubjectScore `json:"scores"`
+
+	CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Import and Export CSV
