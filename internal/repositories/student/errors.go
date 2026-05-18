@@ -6,4 +6,6 @@ var (
 	ErrStudentNotFound = errors.New("student not found")
 	ErrInvalidPage = errors.New("invalid page")
 	ErrInvalidPageSize = errors.New("invalid page size")
+	ErrSubjectNotFound = errors.New("subject not found")
+	ErrScoreNotFound = errors.New("score not found")
 )

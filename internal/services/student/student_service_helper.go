@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/student-management/internal/models"
 	studentModels "github.com/student-management/internal/models/student"
+	studentRepo "github.com/student-management/internal/repositories/student"
 	"github.com/student-management/pkg/utils"
 )
 
@@ -47,7 +48,7 @@ func (s *StudentService) ensureStudentUnique(email, studentID string) error {
 	existedEmail, err := s.repo.GetStudentByEmail(email)
 
 	// DB or network error
-	if err != nil && !errors.Is(err, ErrStudentNotFound){
+	if err != nil && !errors.Is(err, ErrStudentNotFound) {
 		return err
 	}
 
@@ -195,4 +196,17 @@ func (s *StudentService) BulkAddStudents(students []*studentModels.Student) erro
 	}
 
 	return s.repo.BulkAddStudents(validatedStudents)
+}
+
+func wrapRepoError(err error) error {
+	if errors.Is(err, studentRepo.ErrStudentNotFound) {
+		return ErrStudentNotFound
+	}
+	if errors.Is(err, studentRepo.ErrSubjectNotFound) {
+		return ErrSubjectNotFound
+	}
+	if errors.Is(err, studentRepo.ErrScoreNotFound) {
+		return ErrSubjectNotFound
+	}
+	return err
 }

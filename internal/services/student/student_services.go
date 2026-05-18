@@ -33,11 +33,11 @@ var (
 	ErrSubjectFormat     = errors.New("invalid subject format")
 	ErrValidDOB          = errors.New("date of birth cannot be in the future")
 
-	ErrEmailRequired = errors.New("student email is required")
-	ErrNameRequired  = errors.New("student name is required")
-	ErrStudentEmailExisted  = errors.New("student email already existed")
-	ErrStudentClass  = errors.New("student must belong to a class")
-	ErrSubjectEmpty  = errors.New("subject is require to check score")
+	ErrEmailRequired       = errors.New("student email is required")
+	ErrNameRequired        = errors.New("student name is required")
+	ErrStudentEmailExisted = errors.New("student email already existed")
+	ErrStudentClass        = errors.New("student must belong to a class")
+	ErrSubjectEmpty        = errors.New("subject is require to check score")
 
 	ErrScoreData             = errors.New("invalid score data")
 	ErrScoreRange            = errors.New("score must between 0-10")
@@ -126,7 +126,7 @@ func (s *StudentService) DeleteStudent(studentID string) error {
 
 	existing, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
-		return err
+		return wrapRepoError(err)
 	}
 
 	if existing == nil {
@@ -147,7 +147,12 @@ func (s *StudentService) GetStudentByID(studentID string) (*studentModels.Studen
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.GetStudentByID(studentID)
+	student, err := s.repo.GetStudentByID(studentID)
+
+	if err != nil {
+		return nil, wrapRepoError(err)
+	}
+	return student, nil
 }
 
 // GET STUDENT BY EMAIL
@@ -159,7 +164,11 @@ func (s *StudentService) GetStudentByEmail(studentEmail string) (*studentModels.
 	if !utils.IsValidEmail(studentEmail) {
 		return nil, ErrEmailFormat
 	}
-	return s.repo.GetStudentByEmail(studentEmail)
+	student, err := s.repo.GetStudentByEmail(studentEmail)
+	if err != nil {
+		return nil, wrapRepoError(err)
+	}
+	return student, nil
 }
 
 // FILTER STUDENTS
@@ -197,7 +206,7 @@ func (s *StudentService) AddScore(studentID string, score *studentModels.Subject
 
 	student, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
-		return err
+		return wrapRepoError(err)
 	}
 
 	if student == nil {
@@ -208,7 +217,10 @@ func (s *StudentService) AddScore(studentID string, score *studentModels.Subject
 		return err
 	}
 
-	return s.repo.AddScore(studentID, score)
+	if err := s.repo.AddScore(studentID, score); err != nil {
+		return wrapRepoError(err)
+	}
+	return nil
 }
 
 // UPDATE SCORE
@@ -225,7 +237,7 @@ func (s *StudentService) UpdateScore(studentID string, score *studentModels.Subj
 
 	student, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
-		return err
+		return wrapRepoError(err)
 	}
 
 	if student == nil {
@@ -236,7 +248,10 @@ func (s *StudentService) UpdateScore(studentID string, score *studentModels.Subj
 		return err
 	}
 
-	return s.repo.UpdateScore(studentID, score)
+	if err := s.repo.UpdateScore(studentID, score); err != nil{
+		return wrapRepoError(err)
+	}
+	return nil
 }
 
 // DELETE SCORE
@@ -249,7 +264,7 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 
 	student, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
-		return err
+		return wrapRepoError(err)
 	}
 
 	if student == nil {
@@ -260,7 +275,10 @@ func (s *StudentService) DeleteScore(studentID, subject string) error {
 		return err
 	}
 
-	return s.repo.DeleteScore(studentID, subject)
+	if err := s.repo.DeleteScore(studentID, subject); err != nil {
+		return wrapRepoError(err)
+	}
+	return nil
 }
 
 // GET SCORE BY STUDENT ID
@@ -273,14 +291,18 @@ func (s *StudentService) GetScoresByStudentID(studentID string) ([]*studentModel
 
 	existing, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
-		return nil, err
+		return nil, wrapRepoError(err)
 	}
 
 	if existing == nil {
 		return nil, ErrStudentNotFound
 	}
 
-	return s.repo.GetScoresByStudentID(studentID)
+	score, err := s.repo.GetScoresByStudentID(studentID)
+	if err != nil {
+		return nil, wrapRepoError(err)
+	}
+	return score, nil
 }
 
 // GET SCORE BY SUBJECT
@@ -293,14 +315,19 @@ func (s *StudentService) GetScoresBySubject(studentID, subject string) (*student
 
 	existing, err := s.repo.GetStudentByID(studentID)
 	if err != nil {
-		return nil, err
+		return nil, wrapRepoError(err)
 	}
 
 	if existing == nil {
 		return nil, ErrStudentNotFound
 	}
 
-	return s.repo.GetScoresBySubject(studentID, subject)
+	score, err := s.repo.GetScoresBySubject(studentID, subject)
+	if err != nil {
+		return nil, wrapRepoError(err)
+	}
+
+	return score, nil
 
 }
 

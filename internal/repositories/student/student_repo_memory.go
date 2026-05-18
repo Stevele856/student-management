@@ -162,7 +162,7 @@ func (r *InMemoStudentRepo) UpdateScore(studentID string, score *studentModels.S
 	student, existed := r.students[studentID]
 
 	if !existed {
-		return fmt.Errorf("student with ID %s does not exist", studentID)
+		return ErrStudentNotFound
 	}
 
 	for i, s := range student.Scores {
@@ -172,14 +172,14 @@ func (r *InMemoStudentRepo) UpdateScore(studentID string, score *studentModels.S
 			return r.saveFile()
 		}
 	}
-	return fmt.Errorf("subject %s does not exist", score.Subject)
+	return ErrScoreNotFound
 }
 
 func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 	student, existed := r.students[studentID]
 
 	if !existed {
-		return fmt.Errorf("student with ID %s does not exist", studentID)
+		return ErrStudentNotFound
 	}
 
 	for i, s := range student.Scores {
@@ -189,7 +189,7 @@ func (r *InMemoStudentRepo) DeleteScore(studentID, subject string) error {
 		}
 
 	}
-	return fmt.Errorf("subject %s does not exist", subject)
+	return ErrSubjectNotFound
 }
 
 /*
@@ -218,7 +218,7 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*stud
 	student, existed := r.students[studentID]
 
 	if !existed {
-		return nil, fmt.Errorf("student with ID %s does not exist", studentID)
+		return nil, ErrStudentNotFound
 	}
 
 	for _, s := range student.Scores {
@@ -226,7 +226,7 @@ func (r *InMemoStudentRepo) GetScoresBySubject(studentID, subject string) (*stud
 			return s, nil
 		}
 	}
-	return nil, fmt.Errorf("subject %s does not exist", subject)
+	return nil, ErrSubjectNotFound
 }
 
 /* ------------------------- */
