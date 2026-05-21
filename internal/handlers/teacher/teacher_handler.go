@@ -72,7 +72,12 @@ func serviceErrToStatus(err error) int {
 
 // GET TEACHER
 func (h *TeacherHandler) GetTeachers(w http.ResponseWriter, r *http.Request) {
-	h.FilterTeachers(w, r)
+	q := r.URL.Query()
+	if len(q) == 0{
+		h.GetAllTeachers(w,r)
+	}
+	// any query params -> filter by all provided conditions (AND semantics in predicate chain)
+	h.FilterTeachers(w,r)
 }
 
 // GET ALL TEACHERS
