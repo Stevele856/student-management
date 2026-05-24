@@ -24,9 +24,8 @@ type StudentRepository interface {
 	GetScoresByStudentID(studentID string) ([]*studentModels.SubjectScore, error)
 	GetScoresBySubject(studentID, subject string) (*studentModels.SubjectScore, error)
 
-	// Filter
 	FilterStudents(p predicates.PredicateStudent) ([]*studentModels.Student, error)	
-
-	// CSV
+	GetStudentPaginated(page, pageSize int) ([]*studentModels.Student, int, error)
+	// CSV import
 	BulkAddStudents(students []*studentModels.Student) error
 }

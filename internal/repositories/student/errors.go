@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrStudentNotFound = errors.New("student not found")
+	ErrStudentAlreadyExists = errors.New("student already exists")
 	ErrInvalidPage = errors.New("invalid page")
 	ErrInvalidPageSize = errors.New("invalid page size")
 	ErrSubjectNotFound = errors.New("subject not found")

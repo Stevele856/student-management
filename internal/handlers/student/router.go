@@ -6,8 +6,9 @@ func NewRouter(h StudentHandler) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /students", h.GetStudents)
+	mux.HandleFunc("GET /students/paginated", h.GetStudentsPaginated)
 	mux.HandleFunc("GET /students/export", h.ExportStudents)
-	mux.HandleFunc("GET /students/{id}", h.GetStudentByID)
+	mux.HandleFunc("GET /students/{id}",h.GetStudentByID)
 
 	mux.HandleFunc("POST /students", h.AddStudent)
 	mux.HandleFunc("POST /students/bulk-upload", h.BulkAddStudents)

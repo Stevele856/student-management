@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	studentModels "github.com/student-management/internal/models/student"
@@ -248,6 +249,38 @@ func (r *InMemoStudentRepo) FilterStudents(p predicates.PredicateStudent) ([]*st
 	return result, nil
 }
 
+func (r *InMemoStudentRepo) GetStudentPaginated(page, pageSize int) ([]*studentModels.Student, int, error) {
+	if page < 1 {
+		return nil, 0, ErrInvalidPage
+	}
+	if pageSize < 1 {
+		return nil, 0, ErrInvalidPageSize
+	}
+
+	students := make([]*studentModels.Student, 0, len(r.students))
+	for _, student := range r.students {
+		students = append(students, student)
+	}
+
+	sort.Slice(students, func(i, j int) bool {
+		return students[i].ID < students[j].ID
+	})
+
+	total := len(students)
+	start := (page - 1) * pageSize
+
+	if start > total {
+		return []*studentModels.Student{}, total, nil
+	}
+
+	end := start + pageSize
+	if end > total {
+		end = total
+	}
+
+	return students[start:end], total, nil
+}
+
 /* ----------------------------- */
 
 // BULK ADD STUDENTS (CSV)
@@ -255,19 +288,28 @@ func (r *InMemoStudentRepo) BulkAddStudents(students []*studentModels.Student) e
 	if len(students) == 0 {
 		return nil
 	}
-
-	// Check for duplicate IDs in the input and existing students
+	// Check if the incoming teacher data(bulk request) has the same ID, not overwrite the old data with same ID. "payload-duplicate detection"
+	seenID := make(map[string]struct{}, len(students))
 	for _, student := range students {
+		if _, ok := seenID[student.ID]; ok {
+			return fmt.Errorf("%w: duplicate ID in payload: %s", ErrStudentAlreadyExists, student.ID)
+		}
+		seenID[student.ID] = struct{}{}
+
 		if _, existed := r.students[student.ID]; existed {
-			return fmt.Errorf("student with ID %s already exists", student.ID)
+			return fmt.Errorf("%w: %s", ErrStudentAlreadyExists, student.ID)
 		}
 	}
 
-	// Add all students to the map
+	// Add all students
 	for _, student := range students {
 		r.students[student.ID] = student
 	}
 
 	// Save all students to file
-	return r.saveFile()
+	if err := r.saveFile(); err != nil {
+		return fmt.Errorf("save bulk add students: %w", err)
+	}
+	return nil
+
 }

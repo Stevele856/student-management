@@ -27,6 +27,7 @@ func NewStudentService(repo studentRepo.StudentRepository) *StudentService {
 var (
 	ErrStudentData       = errors.New("invalid student data")
 	ErrStudentIDRequired = errors.New("student ID is required")
+	ErrStudentIDDuplicated = errors.New("dublicated student ID")
 	ErrNameFormat        = errors.New("invalid student name format")
 	ErrEmailFormat       = errors.New("invalid student email format")
 	ErrClassFormat       = errors.New("invalid student class format")
@@ -157,7 +158,7 @@ func (s *StudentService) GetStudentByID(studentID string) (*studentModels.Studen
 
 // GET STUDENT BY EMAIL
 func (s *StudentService) GetStudentByEmail(studentEmail string) (*studentModels.Student, error) {
-	studentEmail = strings.TrimSpace(studentEmail)
+	studentEmail = strings.ToLower(strings.TrimSpace(studentEmail))
 	if studentEmail == "" {
 		return nil, ErrEmailRequired
 	}
@@ -188,6 +189,22 @@ func (s *StudentService) FilterStudents(filter *studentModels.FilterStudents) ([
 
 	return s.repo.FilterStudents(predicates.AndStudent(predicate...))
 
+}
+
+func (s *StudentService) GetStudentsPaginated(page, pageSize int) ([]*studentModels.Student, int, error) {
+	if page < 1 {
+		return nil, 0, studentRepo.ErrInvalidPage
+	}
+	if pageSize < 1 {
+		return nil, 0, studentRepo.ErrInvalidPageSize
+	}
+
+	students, total, err := s.repo.GetStudentPaginated(page, pageSize)
+	if err != nil {
+		return nil, 0, wrapRepoError(err)
+	}
+
+	return students, total, nil
 }
 
 /* ------------------------ */

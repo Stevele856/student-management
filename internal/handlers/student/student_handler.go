@@ -9,6 +9,7 @@ import (
 
 	"github.com/student-management/internal/models"
 	"github.com/student-management/internal/models/student"
+	studentRepo "github.com/student-management/internal/repositories/student"
 	"github.com/student-management/internal/services/student"
 	"github.com/student-management/pkg/utils"
 )
@@ -41,7 +42,8 @@ func serviceErrToStatus(err error) int {
 	case errors.Is(err, student.ErrStudentNotFound),
 		errors.Is(err, student.ErrStudentIDRequired),
 		errors.Is(err, student.ErrStudentEmail),
-		errors.Is(err, student.ErrSubjectEmpty):
+		errors.Is(err, student.ErrSubjectEmpty),
+		errors.Is(err, student.ErrSubjectNotFound):
 		return http.StatusNotFound
 
 	case errors.Is(err, student.ErrStudentEmailExisted),
@@ -64,7 +66,9 @@ func serviceErrToStatus(err error) int {
 		errors.Is(err, student.ErrInvalidGender),
 		errors.Is(err, student.ErrAddressTooShort),
 		errors.Is(err, student.ErrInvalidMinMax),
-		errors.Is(err, student.ErrStudentRank):
+		errors.Is(err, student.ErrStudentRank),
+		errors.Is(err, studentRepo.ErrInvalidPage),
+		errors.Is(err, studentRepo.ErrInvalidPageSize):
 		return http.StatusBadRequest
 
 	default:
@@ -73,6 +77,58 @@ func serviceErrToStatus(err error) int {
 }
 
 // GET STUDENTS
+func (h *StudentHandler) GetStudents(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	if q.Get("page") != "" || q.Get("page_size") != "" {
+		h.GetStudentsPaginated(w, r)
+		return
+	}
+	if len(q) == 0{
+		h.GetAllStudents(w,r)
+		return
+	}
+
+	h.FilterStudents(w, r)
+}
+
+func (h *StudentHandler) GetStudentsPaginated(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+
+	page := 1
+	pageSize := 10
+
+	if v := q.Get("page"); v != "" {
+		parsed, err := strconv.Atoi(v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid page")
+			return
+		}
+		page = parsed
+	}
+
+	if v := q.Get("page_size"); v != "" {
+		parsed, err := strconv.Atoi(v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid page_size")
+			return
+		}
+		pageSize = parsed
+	}
+
+	students, total, err := h.service.GetStudentsPaginated(page, pageSize)
+	if err != nil {
+		writeError(w, serviceErrToStatus(err), err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"page":      page,
+		"page_size": pageSize,
+		"total":     total,
+		"data":      students,
+	})
+}
+
 func (h *StudentHandler) GetAllStudents(w http.ResponseWriter, r *http.Request) {
 	students, err := h.service.GetAllStudents()
 
@@ -82,43 +138,6 @@ func (h *StudentHandler) GetAllStudents(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusOK, students)
-}
-
-func (h *StudentHandler) GetStudentByEmail(w http.ResponseWriter, r *http.Request) {
-	email := r.URL.Query().Get("email")
-
-	student, err := h.service.GetStudentByEmail(email)
-	if err != nil {
-		writeError(w, serviceErrToStatus(err), err.Error())
-		return
-	}
-
-	if student == nil {
-		writeError(w, http.StatusNotFound, "student not found")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, student)
-}
-
-// GET STUDENTS IF HAVE EMAIL QUERY PARAM
-func (h *StudentHandler) GetStudents(w http.ResponseWriter, r *http.Request) {
-	email := r.URL.Query().Get("email")
-	if email != "" {
-		h.GetStudentByEmail(w, r)
-		return
-	}
-
-	//CHECK FILTER PARAM
-	q := r.URL.Query()
-
-	if q.Get("name") != "" || q.Get("class") != "" || q.Get("gender") != "" || q.Get("year_of_birth") != "" ||
-		q.Get("address") != "" || q.Get("min_score") != "" || q.Get("max_score") != "" || q.Get("rank") != "" {
-		h.FilterStudents(w, r)
-		return
-	}
-
-	h.GetAllStudents(w, r)
 }
 
 func (h *StudentHandler) GetStudentByID(w http.ResponseWriter, r *http.Request) {

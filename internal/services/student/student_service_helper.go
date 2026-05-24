@@ -157,7 +157,8 @@ func (s *StudentService) BulkAddStudents(students []*studentModels.Student) erro
 
 	// Normalize and validate all students
 	validatedStudents := make([]*studentModels.Student, len(students))
-	emailSet := make(map[string]bool) // Track emails within input for duplicates
+	emailSet := make(map[string]struct{}, len(students)) // detecting duplicate emails inside the same input payload
+	idSet := make(map[string]struct{}, len(students))    // detecting dublicate id inside the same input in payload
 
 	for i, student := range students {
 		if student == nil {
@@ -170,32 +171,47 @@ func (s *StudentService) BulkAddStudents(students []*studentModels.Student) erro
 			return err
 		}
 
-		// Check for duplicate emails within the input
-		email := strings.ToLower(student.Email)
-		if emailSet[email] {
+		// Check for duplicate emails within the input batch
+		email := strings.ToLower(strings.TrimSpace(student.Email))
+		if _, exists := emailSet[email]; exists {
 			return ErrStudentEmailExisted
 		}
-		emailSet[email] = true
+		emailSet[email] = struct{}{}
 
+		// Dublicate non-empty ID inside input ByTeacherEmail
+		if student.ID != "" {
+			id := strings.TrimSpace(student.ID)
+			if _, exists := idSet[id]; exists {
+				return ErrStudentIDDuplicated
+			}
+			idSet[id] = struct{}{}
+		}
 		validatedStudents[i] = student
 	}
 
-	// Check for email conflicts with existing students
+	// Check for email conflicts with existing students records
 	for _, student := range validatedStudents {
 		existed, err := s.repo.GetStudentByEmail(student.Email)
 		if err == nil && existed != nil {
 			return ErrStudentEmailExisted
 		}
+		if err != nil && !errors.Is(err, studentRepo.ErrStudentNotFound) {
+			return wrapRepoError(err)
+		}
 	}
 
 	// Generate UUIDs for students without IDs
 	for _, student := range validatedStudents {
-		if student.ID == "" {
+		if strings.TrimSpace(student.ID) == "" {
 			student.ID = uuid.New().String()
 		}
 	}
 
-	return s.repo.BulkAddStudents(validatedStudents)
+	if err := s.repo.BulkAddStudents(validatedStudents); err != nil {
+		return wrapRepoError(err)
+	}
+
+	return nil
 }
 
 func wrapRepoError(err error) error {
