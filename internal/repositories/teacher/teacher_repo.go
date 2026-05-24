@@ -18,6 +18,11 @@ type TeacherRepository interface {
 	GetTeacherByStatus(status teacherModels.TeacherStatus) ([]*teacherModels.Teacher, error)
 	GetTeacherByEmployeeID(employeeID string) (*teacherModels.Teacher, error)
 	FilterTeachers(p predicates.PredicateTeacher) ([]*teacherModels.Teacher, error)
-	// GetTeachersPaginated(page, pageSize int) ([]*teacherModels.Teacher, int, error)
+
+	
+	GetTeachersPaginated(page, pageSize int) ([]*teacherModels.Teacher, int, error)
+	// CSV import
+	BulkAddTeachers(teachers []*teacherModels.Teacher) error
+
 }
 

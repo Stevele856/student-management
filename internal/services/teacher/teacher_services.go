@@ -234,3 +234,19 @@ func (t *TeacherService) FilterTeachers(filter *teacherModels.FilterTeachers) ([
 	return t.repo.FilterTeachers(predicates.AndTeacher(predicate...))
 	
 }
+
+func (t *TeacherService) GetTeachersPaginated(page, pageSize int) ([]*teacherModels.Teacher, int, error) {
+	if page < 1 {
+		return nil, 0, teacherRepo.ErrInvalidPage
+	}
+	if pageSize < 1 {
+		return nil, 0, teacherRepo.ErrInvalidPageSize
+	}
+
+	teachers, total, err := t.repo.GetTeachersPaginated(page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return teachers, total, nil
+}

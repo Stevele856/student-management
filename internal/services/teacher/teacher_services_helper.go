@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/student-management/internal/models"
 	teacherModels "github.com/student-management/internal/models/teacher"
 	"github.com/student-management/internal/predicates"
@@ -258,7 +259,7 @@ func filterPredicateTeachers(filter *teacherModels.FilterTeachers) []predicates.
 	if filter.Gender != "" {
 		predicate = append(predicate, predicates.ByTeacherGender(filter.Gender))
 	}
-	if filter.Email != ""{
+	if filter.Email != "" {
 		predicate = append(predicate, predicates.ByTeacherEmail(filter.Email))
 	}
 	if filter.EmployeeID != "" {
@@ -285,3 +286,101 @@ func filterPredicateTeachers(filter *teacherModels.FilterTeachers) []predicates.
 	}
 	return predicate
 }
+
+func (s *TeacherService) BulkAddTeachers(teachers []*teacherModels.Teacher) error {
+	if len(teachers) == 0 {
+		return nil
+	}
+
+	// Normalize and validate all teachers
+	validatedTeachers := make([]*teacherModels.Teacher, len(teachers))
+	emailSet := make(map[string]struct{}, len(teachers)) // detecting duplicate emails inside the same input payload
+	idSet := make(map[string]struct{}, len(teachers))
+	employeeIDSet := make(map[string]struct{}, len(teachers))
+
+	for i, teacher := range teachers {
+		if teacher == nil {
+			return ErrTeacherData
+		}
+
+		teacher = normalizeTeacher(teacher)
+
+		if err := validateTeacher(teacher); err != nil {
+			return err
+		}
+
+		// Duplicate email in payload
+		email := strings.ToLower(strings.TrimSpace(teacher.Email))
+		if _, exists := emailSet[email]; exists {
+			return ErrTeacherEmailExisted
+		}
+		emailSet[email] = struct{}{}
+
+		// Duplicate non-empty ID in payload
+		if teacher.ID != "" {
+			id := strings.TrimSpace(teacher.ID)
+			if _, exists := idSet[id]; exists {
+				return ErrTeacherIDRequired // better: ErrTeacherIDDuplicated if you define one
+			}
+			idSet[id] = struct{}{}
+		}
+
+		validatedTeachers[i] = teacher
+
+		// Duplicate employee ID in payload
+		employeeID := strings.ToLower(strings.TrimSpace(teacher.EmployeeID))
+		if _, exists := employeeIDSet[employeeID]; exists {
+			return ErrTeacherEmployeeIDExisted
+		}
+		employeeIDSet[employeeID] = struct{}{}
+	}
+
+	// Check conflicts with existing records
+	for _, teacher := range validatedTeachers {
+		existedByEmail, err := s.repo.GetTeacherByEmail(teacher.Email)
+		if err == nil && existedByEmail != nil {
+			return ErrTeacherEmailExisted
+		}
+		if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound) {
+			return wrapRepoError(err)
+		}
+
+		existedByEmpID, err := s.repo.GetTeacherByEmployeeID(teacher.EmployeeID)
+		if err == nil && existedByEmpID != nil {
+			return ErrTeacherEmployeeIDExisted
+		}
+		if err != nil && !errors.Is(err, teacherRepo.ErrTeacherNotFound) {
+			return wrapRepoError(err)
+		}
+	}
+
+	// Generate UUID for empty IDs
+	for _, teacher := range validatedTeachers {
+		if strings.TrimSpace(teacher.ID) == "" {
+			teacher.ID = uuid.New().String()
+		}
+	}
+
+	if err := s.repo.BulkAddTeachers(validatedTeachers); err != nil {
+		return wrapRepoError(err)
+	}
+
+	return nil
+}
+
+func wrapRepoError(err error) error {
+	if errors.Is(err, teacherRepo.ErrTeacherNotFound) {
+		return teacherRepo.ErrTeacherNotFound
+	}
+	if errors.Is(err, teacherRepo.ErrTeacherAlreadyExists) {
+		return teacherRepo.ErrTeacherAlreadyExists
+	}
+	if errors.Is(err, teacherRepo.ErrInvalidPage) {
+		return teacherRepo.ErrInvalidPage
+	}
+	if errors.Is(err, teacherRepo.ErrInvalidPageSize) {
+		return teacherRepo.ErrInvalidPageSize
+	}
+	return err
+}
+
