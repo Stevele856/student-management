@@ -1,4 +1,4 @@
-package TeacherHandler
+package teacherHandler
 
 import (
 	"encoding/json"
@@ -39,8 +39,7 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 // Map service error -> HTTP status code
 func serviceErrToStatus(err error) int {
 	switch {
-	case errors.Is(err, teacherRepo.ErrTeacherNotFound),
-		errors.Is(err, teacher.ErrTeacherIDRequired):
+	case errors.Is(err, teacherRepo.ErrTeacherNotFound):
 		return http.StatusNotFound // 404
 
 	case errors.Is(err, teacher.ErrTeacherEmailExisted),
@@ -66,7 +65,8 @@ func serviceErrToStatus(err error) int {
 		errors.Is(err, teacher.ErrTeacherHireDate),
 		errors.Is(err, teacher.ErrClassRequired),
 		errors.Is(err, teacherRepo.ErrInvalidPage),
-		errors.Is(err, teacherRepo.ErrInvalidPageSize):
+		errors.Is(err, teacherRepo.ErrInvalidPageSize),
+		errors.Is(err, teacher.ErrTeacherIDRequired):
 		return http.StatusBadRequest // 400
 
 	default:
@@ -81,12 +81,12 @@ func (h *TeacherHandler) GetTeachers(w http.ResponseWriter, r *http.Request) {
 		h.GetTeachersPaginated(w, r)
 		return
 	}
-	if len(q) == 0{
-		h.GetAllTeachers(w,r)
+	if len(q) == 0 {
+		h.GetAllTeachers(w, r)
 		return
 	}
 	// any query params -> filter by all provided conditions (AND semantics in predicate chain)
-	h.FilterTeachers(w,r)
+	h.FilterTeachers(w, r)
 }
 
 func (h *TeacherHandler) GetTeachersPaginated(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +138,6 @@ func (h *TeacherHandler) GetAllTeachers(w http.ResponseWriter, r *http.Request) 
 
 	writeJSON(w, http.StatusOK, &teachers)
 }
-
 
 // FILTER TEACHER
 func (h *TeacherHandler) FilterTeachers(w http.ResponseWriter, r *http.Request) {
@@ -397,7 +396,6 @@ func (h *TeacherHandler) ExportTeachers(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
-
 
 /*
 // GET TEACHER BY EMAIL

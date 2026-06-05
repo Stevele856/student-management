@@ -3,7 +3,7 @@ package predicates
 import (
 	"strings"
 
-	"github.com/student-management/internal/models/student"
+	studentModels "github.com/student-management/internal/models/student"
 	"github.com/student-management/pkg/utils"
 )
 
@@ -36,7 +36,7 @@ func ByGender(gender string) PredicateStudent {
 
 func ByAddress(address string) PredicateStudent {
 	return func(s *studentModels.Student) bool {
-		return strings.EqualFold(s.Address, address)
+		return strings.Contains(strings.ToLower(s.Address), strings.ToLower(address))
 	}
 }
 

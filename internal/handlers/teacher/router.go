@@ -1,4 +1,4 @@
-package TeacherHandler
+package teacherHandler
 
 import "net/http"
 

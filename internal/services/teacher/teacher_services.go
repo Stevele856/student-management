@@ -43,6 +43,7 @@ var (
 	ErrTeacherEmailExisted      = errors.New("teacher email already existed")
 	ErrTeacherEmployeeIDExisted = errors.New("teacher employee ID already existed")
 	ErrTeacherIDRequired        = errors.New("teacher ID required")
+	ErrTeacherIDDuplicated      = errors.New("teacher ID duplicated")
 )
 
 // ADD TEACHER
@@ -51,7 +52,7 @@ func (t *TeacherService) AddTeacher(teacher *teacherModels.Teacher) error {
 		return ErrTeacherData
 	}
 
-	teacher = normalizeTeacher(teacher)
+	normalizeTeacher(teacher)
 	if err := validateTeacher(teacher); err != nil {
 		return err
 	}
@@ -91,7 +92,7 @@ func (t *TeacherService) UpdateTeacher(teacher *teacherModels.Teacher) error {
 		return err
 	}
 
-	teacher = normalizeTeacher(teacher)
+	normalizeTeacher(teacher)
 
 	// Preserve system fields from old record
 	teacher.ID = existingTeacher.ID
@@ -219,8 +220,7 @@ func (t *TeacherService) GetTeacherByEmployeeID(employeeID string) (*teacherMode
 	return existing, nil
 }
 
-
-func (t *TeacherService) FilterTeachers(filter *teacherModels.FilterTeachers) ([]*teacherModels.Teacher, error){
+func (t *TeacherService) FilterTeachers(filter *teacherModels.FilterTeachers) ([]*teacherModels.Teacher, error) {
 	if filter == nil {
 		return t.repo.GetAllTeachers()
 	}
@@ -232,7 +232,7 @@ func (t *TeacherService) FilterTeachers(filter *teacherModels.FilterTeachers) ([
 
 	predicate := filterPredicateTeachers(filter)
 	return t.repo.FilterTeachers(predicates.AndTeacher(predicate...))
-	
+
 }
 
 func (t *TeacherService) GetTeachersPaginated(page, pageSize int) ([]*teacherModels.Teacher, int, error) {
