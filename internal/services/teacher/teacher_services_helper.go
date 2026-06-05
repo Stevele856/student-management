@@ -15,28 +15,25 @@ import (
 )
 
 // STANDARD DATA
-func normalizeTeacher(teacher *teacherModels.Teacher) *teacherModels.Teacher {
+func normalizeTeacher(teacher *teacherModels.Teacher) {
 	if teacher == nil {
-		return nil
+		return
 	}
-	t := *teacher
-	t.ID = strings.TrimSpace(t.ID)
-	t.FullName = strings.TrimSpace(t.FullName)
-	t.Email = strings.ToLower(strings.TrimSpace(t.Email))
-	t.Address = strings.TrimSpace(t.Address)
-	t.Phone = strings.TrimSpace(t.Phone)
+	teacher.ID = strings.TrimSpace(teacher.ID)
+	teacher.FullName = strings.TrimSpace(teacher.FullName)
+	teacher.Email = strings.ToLower(strings.TrimSpace(teacher.Email))
+	teacher.Address = strings.TrimSpace(teacher.Address)
+	teacher.Phone = strings.TrimSpace(teacher.Phone)
 
-	t.EmployeeID = strings.ToUpper(strings.TrimSpace(t.EmployeeID))
-	for i := range t.SubjectTaught {
-		t.SubjectTaught[i] = strings.TrimSpace(t.SubjectTaught[i])
+	teacher.EmployeeID = strings.ToUpper(strings.TrimSpace(teacher.EmployeeID))
+	for i := range teacher.SubjectTaught {
+		teacher.SubjectTaught[i] = strings.TrimSpace(teacher.SubjectTaught[i])
 	}
 
-	for i := range t.ClassAssigned {
-		t.ClassAssigned[i] = strings.TrimSpace(t.ClassAssigned[i])
+	for i := range teacher.ClassAssigned {
+		teacher.ClassAssigned[i] = strings.TrimSpace(teacher.ClassAssigned[i])
 	}
-	t.Status = teacherModels.TeacherStatus(strings.ToLower(strings.TrimSpace(string(t.Status))))
-
-	return &t
+	teacher.Status = teacherModels.TeacherStatus(strings.ToLower(strings.TrimSpace(string(teacher.Status))))
 }
 
 func validateTeacher(teacher *teacherModels.Teacher) error {
@@ -303,7 +300,7 @@ func (s *TeacherService) BulkAddTeachers(teachers []*teacherModels.Teacher) erro
 			return ErrTeacherData
 		}
 
-		teacher = normalizeTeacher(teacher)
+		normalizeTeacher(teacher)
 
 		if err := validateTeacher(teacher); err != nil {
 			return err
@@ -320,7 +317,7 @@ func (s *TeacherService) BulkAddTeachers(teachers []*teacherModels.Teacher) erro
 		if teacher.ID != "" {
 			id := strings.TrimSpace(teacher.ID)
 			if _, exists := idSet[id]; exists {
-				return ErrTeacherIDRequired // better: ErrTeacherIDDuplicated if you define one
+				return ErrTeacherIDDuplicated // better: ErrTeacherIDDuplicated if you define one
 			}
 			idSet[id] = struct{}{}
 		}
@@ -383,4 +380,3 @@ func wrapRepoError(err error) error {
 	}
 	return err
 }
-

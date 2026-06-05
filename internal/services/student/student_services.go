@@ -25,14 +25,14 @@ func NewStudentService(repo studentRepo.StudentRepository) *StudentService {
 
 // THROW ERROR
 var (
-	ErrStudentData       = errors.New("invalid student data")
-	ErrStudentIDRequired = errors.New("student ID is required")
+	ErrStudentData         = errors.New("invalid student data")
+	ErrStudentIDRequired   = errors.New("student ID is required")
 	ErrStudentIDDuplicated = errors.New("dublicated student ID")
-	ErrNameFormat        = errors.New("invalid student name format")
-	ErrEmailFormat       = errors.New("invalid student email format")
-	ErrClassFormat       = errors.New("invalid student class format")
-	ErrSubjectFormat     = errors.New("invalid subject format")
-	ErrValidDOB          = errors.New("date of birth cannot be in the future")
+	ErrNameFormat          = errors.New("invalid student name format")
+	ErrEmailFormat         = errors.New("invalid student email format")
+	ErrClassFormat         = errors.New("invalid student class format")
+	ErrSubjectFormat       = errors.New("invalid subject format")
+	ErrValidDOB            = errors.New("date of birth cannot be in the future")
 
 	ErrEmailRequired       = errors.New("student email is required")
 	ErrNameRequired        = errors.New("student name is required")
@@ -64,7 +64,7 @@ func (s *StudentService) AddStudent(student *studentModels.Student) error {
 		return ErrStudentData
 	}
 
-	student = normalizeStudent(student)
+	normalizeStudent(student)
 
 	if err := validateStudent(student); err != nil {
 		return err
@@ -100,7 +100,7 @@ func (s *StudentService) UpdateStudent(student *studentModels.Student) error {
 		return err
 	}
 
-	student = normalizeStudent(student)
+	normalizeStudent(student)
 
 	// Preserve system fields from old record
 	student.ID = existingStudent.ID
@@ -265,7 +265,7 @@ func (s *StudentService) UpdateScore(studentID string, score *studentModels.Subj
 		return err
 	}
 
-	if err := s.repo.UpdateScore(studentID, score); err != nil{
+	if err := s.repo.UpdateScore(studentID, score); err != nil {
 		return wrapRepoError(err)
 	}
 	return nil
@@ -442,6 +442,10 @@ func filterPredicateStudents(filter *studentModels.FilterStudents) []predicates.
 		predicate = append(predicate, predicates.ByClass(filter.Class))
 	}
 
+	if filter.YearOfBirth != 0 {
+		predicate = append(predicate, predicates.ByYear(filter.YearOfBirth))
+	}
+
 	if filter.Gender != "" {
 		predicate = append(predicate, predicates.ByGender(string(filter.Gender)))
 	}
@@ -450,7 +454,7 @@ func filterPredicateStudents(filter *studentModels.FilterStudents) []predicates.
 		predicate = append(predicate, predicates.ByAddress(filter.Address))
 	}
 
-	if filter.MinAvgScore > 0 && filter.MaxAvgScore > 0 {
+	if filter.MinAvgScore > 0 || filter.MaxAvgScore > 0 {
 		predicate = append(predicate, predicates.ByAvgScore(filter.MinAvgScore, filter.MaxAvgScore))
 	}
 

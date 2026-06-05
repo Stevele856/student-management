@@ -1,4 +1,4 @@
-package StudentHandler
+package studentHandler
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/student-management/internal/models"
-	"github.com/student-management/internal/models/student"
+	studentModels "github.com/student-management/internal/models/student"
 	studentRepo "github.com/student-management/internal/repositories/student"
 	"github.com/student-management/internal/services/student"
 	"github.com/student-management/pkg/utils"
@@ -40,16 +40,14 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 func serviceErrToStatus(err error) int {
 	switch {
 	case errors.Is(err, student.ErrStudentNotFound),
-		errors.Is(err, student.ErrStudentIDRequired),
 		errors.Is(err, student.ErrStudentEmail),
-		errors.Is(err, student.ErrSubjectEmpty),
 		errors.Is(err, student.ErrSubjectNotFound):
-		return http.StatusNotFound
+		return http.StatusNotFound // 404
 
 	case errors.Is(err, student.ErrStudentEmailExisted),
 		errors.Is(err, student.ErrSubjectAlreadyExisted),
 		errors.Is(err, student.ErrDublicatedSubject):
-		return http.StatusConflict
+		return http.StatusConflict // 409
 
 	case errors.Is(err, student.ErrStudentData),
 		errors.Is(err, student.ErrNameFormat),
@@ -68,8 +66,11 @@ func serviceErrToStatus(err error) int {
 		errors.Is(err, student.ErrInvalidMinMax),
 		errors.Is(err, student.ErrStudentRank),
 		errors.Is(err, studentRepo.ErrInvalidPage),
+		errors.Is(err, student.ErrStudentIDRequired),
+		errors.Is(err, student.ErrSubjectEmpty),
+		errors.Is(err, student.ErrScoreRange),
 		errors.Is(err, studentRepo.ErrInvalidPageSize):
-		return http.StatusBadRequest
+		return http.StatusBadRequest // 400
 
 	default:
 		return http.StatusInternalServerError
@@ -83,8 +84,8 @@ func (h *StudentHandler) GetStudents(w http.ResponseWriter, r *http.Request) {
 		h.GetStudentsPaginated(w, r)
 		return
 	}
-	if len(q) == 0{
-		h.GetAllStudents(w,r)
+	if len(q) == 0 {
+		h.GetAllStudents(w, r)
 		return
 	}
 

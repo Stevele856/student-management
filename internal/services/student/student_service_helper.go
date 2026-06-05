@@ -12,16 +12,11 @@ import (
 	"github.com/student-management/pkg/utils"
 )
 
-func normalizeStudent(student *studentModels.Student) *studentModels.Student {
-	if student == nil {
-		return nil
-	}
-	s := *student
-	s.FullName = strings.TrimSpace(s.FullName)
-	s.Email = strings.ToLower(strings.TrimSpace(s.Email))
-	s.Class = strings.TrimSpace(s.Class)
-	s.Address = strings.TrimSpace(s.Address)
-	return &s
+func normalizeStudent(student *studentModels.Student) {
+	student.FullName = strings.TrimSpace(student.FullName)
+	student.Email = strings.ToLower(strings.TrimSpace(student.Email))
+	student.Class = strings.ToUpper(strings.TrimSpace(student.Class))
+	student.Address = strings.TrimSpace(student.Address)
 }
 
 func (s *StudentService) requireStudentID(studentID string) (string, error) {
@@ -48,7 +43,7 @@ func (s *StudentService) ensureStudentUnique(email, studentID string) error {
 	existedEmail, err := s.repo.GetStudentByEmail(email)
 
 	// DB or network error
-	if err != nil && !errors.Is(err, ErrStudentNotFound) {
+	if err != nil && !errors.Is(err, studentRepo.ErrStudentNotFound) {
 		return err
 	}
 
@@ -165,7 +160,7 @@ func (s *StudentService) BulkAddStudents(students []*studentModels.Student) erro
 			return ErrStudentData
 		}
 
-		student = normalizeStudent(student)
+		normalizeStudent(student)
 
 		if err := validateStudent(student); err != nil {
 			return err
