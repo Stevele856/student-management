@@ -80,6 +80,12 @@ func (s *StudentService) AddStudent(student *studentModels.Student) error {
 		student.ID = uuid.New().String()
 	}
 
+	now := time.Now().UTC()
+	if student.CreatedAt.IsZero() {
+		student.CreatedAt = now
+	}
+	student.UpdatedAt = now
+
 	return s.repo.AddStudent(student)
 }
 
