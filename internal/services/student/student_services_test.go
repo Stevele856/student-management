@@ -149,26 +149,11 @@ func TestNormalizeStudent(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// SAVE ORIGINAL
-			originalFullname := tc.input.FullName
-			orginalEmail := tc.input.Email
-			originalClass := tc.input.Class
+			normalizeStudent(tc.input)
 
-			result := normalizeStudent(tc.input)
-
-			assertField(t, "Fullname", result.FullName, tc.expectedStudentData.FullName)
-			assertField(t, "Email", result.Email, tc.expectedStudentData.Email)
-			assertField(t, "Fullname", result.Class, tc.expectedStudentData.Class)
-
-			// make sure input does not being mutated
-			mutateField(t, "Fullname", tc.input.FullName, originalFullname)
-			mutateField(t, "Email", tc.input.Email, orginalEmail)
-			mutateField(t, "Email", tc.input.Class, originalClass)
-
-			// Check return new pointer
-			if result == tc.input {
-				t.Error("normalizeStudent() return same pointer with input")
-			}
+			assertField(t, "Fullname", tc.input.FullName, tc.expectedStudentData.FullName)
+			assertField(t, "Email", tc.input.Email, tc.expectedStudentData.Email)
+			assertField(t, "Class", tc.input.Class, tc.expectedStudentData.Class)
 		})
 	}
 

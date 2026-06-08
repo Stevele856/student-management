@@ -22,7 +22,8 @@ type MockStudentRepository struct {
 	GetScoresByStudentIDFn func(studentID string) ([]*studentModels.SubjectScore, error)
 	GetScoresBySubjectFn   func(studentID, subject string) (*studentModels.SubjectScore, error)
 
-	FilterStudentsFn func(p predicates.PredicateStudent) ([]*studentModels.Student, error)
+	FilterStudentsFn      func(p predicates.PredicateStudent) ([]*studentModels.Student, error)
+	GetStudentPaginatedFn func(page, pageSize int) ([]*studentModels.Student, int, error)
 	// CSV
 	BulkAddStudentsFn func(students []*studentModels.Student) error
 }
@@ -74,6 +75,10 @@ func (m *MockStudentRepository) GetScoresBySubject(studentID, subject string) (*
 
 func (m *MockStudentRepository) FilterStudents(p predicates.PredicateStudent) ([]*studentModels.Student, error){
 	return m.FilterStudentsFn(p)
+}
+
+func (m *MockStudentRepository) GetStudentPaginated(page, pageSize int) ([]*studentModels.Student, int, error){
+	return m.GetStudentPaginatedFn(page, pageSize)
 }
 
 func (m *MockStudentRepository) BulkAddStudents(student []*studentModels.Student) error{
