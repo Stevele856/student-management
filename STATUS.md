@@ -1,7 +1,7 @@
 # Project Status — Student Management System
 
-**Last updated:** 2026-06-04  
-**Current phase:** API testing & bug fixes (before MySQL migration)
+**Last updated:** 2026-06-09  
+**Current phase:** Postman testing (Phase 2) — Phase 1 bug fixes complete
 
 ---
 
@@ -48,9 +48,9 @@
 
 ---
 
-## Bugs Found (Code Audit — Fix Before Testing)
+## Bugs Found (Code Audit — ✅ ALL FIXED 2026-06-09)
 
-These are confirmed code bugs found by reading the source. Fix these first before Postman testing.
+These were confirmed code bugs found by reading the source. **All have been fixed and verified** (`go build ./...` and `go test ./...` pass). Kept here for record.
 
 ### BUG-01 — `year_of_birth` filter is silently ignored
 **File:** `internal/services/student/student_services.go` — `filterPredicateStudents()`  
@@ -109,97 +109,97 @@ Work through these in order. Fix bugs as you find them. Mark [x] when verified.
 ### Student Endpoints
 
 **Basic CRUD**
-- [ ] `POST /students` — create with valid body → expect 201 + body with ID
-- [ ] `POST /students` — missing name → expect 400
-- [ ] `POST /students` — invalid email → expect 400
-- [ ] `POST /students` — duplicate email → expect 409
-- [ ] `POST /students` — future date_of_birth → expect 400
-- [ ] `POST /students` — invalid class (e.g., "10a" lowercase) → expect 400 *(BUG-10 must be fixed first)*
-- [ ] `GET /students/{id}` — existing ID → expect 200
-- [ ] `GET /students/{id}` — non-existent ID → expect 404
-- [ ] `PUT /students/{id}` — valid update → expect 200 + body with UpdatedAt *(BUG-04/05 must be fixed)*
-- [ ] `PUT /students/{id}` — change email to a new unique email → expect 200 *(BUG-03 must be fixed)*
-- [ ] `PUT /students/{id}` — change email to an email used by another student → expect 409
-- [ ] `DELETE /students/{id}` — existing → expect 200
-- [ ] `DELETE /students/{id}` — non-existent → expect 404
+- [x] `POST /students` — create with valid body → expect 201 + body with ID
+- [x] `POST /students` — missing name → expect 400
+- [x] `POST /students` — invalid email → expect 400
+- [x] `POST /students` — duplicate email → expect 409
+- [x] `POST /students` — future date_of_birth → expect 400
+- [x] `POST /students` — invalid class (e.g., "10a" lowercase) → expect 400 *(BUG-10 must be fixed first)*
+- [x] `GET /students/{id}` — existing ID → expect 200
+- [x] `GET /students/{id}` — non-existent ID → expect 404
+- [x] `PUT /students/{id}` — valid update → expect 200 + body with UpdatedAt *(BUG-04/05 must be fixed)*
+- [x] `PUT /students/{id}` — change email to a new unique email → expect 200 *(BUG-03 must be fixed)*
+- [x] `PUT /students/{id}` — change email to an email used by another student → expect 409
+- [x] `DELETE /students/{id}` — existing → expect 200
+- [x] `DELETE /students/{id}` — non-existent → expect 404
 
 **Listing & Pagination**
-- [ ] `GET /students` — no params → expect 200 + full list
-- [ ] `GET /students?page=1&page_size=5` → expect 200 + paginated response with `total`
-- [ ] `GET /students?page=0` → expect 400
-- [ ] `GET /students/paginated?page=1&page_size=5` → same as above
+- [x] `GET /students` — no params → expect 200 + full list
+- [x] `GET /students?page=1&page_size=5` → expect 200 + paginated response with `total`
+- [x] `GET /students?page=0` → expect 400
+- [x] `GET /students/paginated?page=1&page_size=5` → same as above
 
 **Filters** *(Fix BUG-01, BUG-02 first)*
-- [ ] `GET /students?name=Nguyen` → expect matching students
-- [ ] `GET /students?class=10A` → expect matching students
-- [ ] `GET /students?year_of_birth=2005` → expect matching *(BUG-01)*
-- [ ] `GET /students?gender=male` → expect matching
-- [ ] `GET /students?address=Hanoi` → expect substring match *(BUG-09)*
-- [ ] `GET /students?min_score=7` → expect students with avg >= 7 *(BUG-02)*
-- [ ] `GET /students?max_score=5` → expect students with avg <= 5 *(BUG-02)*
-- [ ] `GET /students?min_score=5&max_score=8` → expect students with 5 <= avg <= 8
-- [ ] `GET /students?min_score=-1` → expect 400 *(BUG-08)*
-- [ ] `GET /students?rank=excellent` → expect students with avg >= 9
-- [ ] `GET /students?name=Nguyen&class=10A` → combined filter (AND semantics)
-- [ ] `GET /students?name=Nguyen&page=1` → should paginate, ignores name (current design) — note behavior
+- [x] `GET /students?name=Nguyen` → expect matching students
+- [x] `GET /students?class=10A` → expect matching students
+- [x] `GET /students?year_of_birth=2005` → expect matching *(BUG-01)*
+- [x] `GET /students?gender=male` → expect matching
+- [x] `GET /students?address=Hanoi` → expect substring match *(BUG-09)*
+- [x] `GET /students?min_score=7` → expect students with avg >= 7 *(BUG-02)*
+- [x] `GET /students?max_score=5` → expect students with avg <= 5 *(BUG-02)*
+- [x] `GET /students?min_score=5&max_score=8` → expect students with 5 <= avg <= 8
+- [x] `GET /students?min_score=-1` → expect 400 *(BUG-08)*
+- [x] `GET /students?rank=excellent` → expect students with avg >= 9
+- [x] `GET /students?name=Nguyen&class=10A` → combined filter (AND semantics)
+- [x] `GET /students?name=Nguyen&page=1` → should paginate, ignores name (current design) — note behavior
 
 **Scores**
-- [ ] `POST /students/{id}/scores` — add new subject → expect 201
-- [ ] `POST /students/{id}/scores` — duplicate subject → expect 409
-- [ ] `POST /students/{id}/scores` — score > 10 → expect 400
-- [ ] `POST /students/{id}/scores` — 11th score → expect 400
-- [ ] `GET /students/{id}/scores` → expect 200 + array
-- [ ] `GET /students/{id}/scores/{subject}` → expect 200 + score object
-- [ ] `GET /students/{id}/scores/{subject}` — non-existent subject → expect 404
-- [ ] `PUT /students/{id}/scores/{subject}` — update score → expect 200
-- [ ] `DELETE /students/{id}/scores/{subject}` → expect 200
-- [ ] `DELETE /students/{id}/scores/{subject}` — non-existent → expect 404
+- [x] `POST /students/{id}/scores` — add new subject → expect 201
+- [x] `POST /students/{id}/scores` — duplicate subject → expect 409
+- [x] `POST /students/{id}/scores` — score > 10 → expect 400
+- [x] `POST /students/{id}/scores` — 11th score → expect 400
+- [x] `GET /students/{id}/scores` → expect 200 + array
+- [x] `GET /students/{id}/scores/{subject}` → expect 200 + score object
+- [x] `GET /students/{id}/scores/{subject}` — non-existent subject → expect 404
+- [x] `PUT /students/{id}/scores/{subject}` — update score → expect 200
+- [x] `DELETE /students/{id}/scores/{subject}` → expect 200
+- [x] `DELETE /students/{id}/scores/{subject}` — non-existent → expect 404
 
 **CSV**
-- [ ] `POST /students/bulk-upload` — valid CSV → expect 201 + count
-- [ ] `POST /students/bulk-upload` — duplicate email in CSV → expect 409
-- [ ] `GET /students/export` — no params → download all as CSV
-- [ ] `GET /students/export?class=10A` → filtered CSV download
+- [x] `POST /students/bulk-upload` — valid CSV → expect 201 + count
+- [x] `POST /students/bulk-upload` — duplicate email in CSV → expect 409
+- [x] `GET /students/export` — no params → download all as CSV
+- [x] `GET /students/export?class=10A` → filtered CSV download
 
 ---
 
 ### Teacher Endpoints
 
 **Basic CRUD**
-- [ ] `POST /teachers` — valid body → expect 201 + body with ID *(BUG-04)*
-- [ ] `POST /teachers` — missing phone → expect 400
-- [ ] `POST /teachers` — invalid employee_id format (not T###) → expect 400
-- [ ] `POST /teachers` — hire date before min age 25 → expect 400
-- [ ] `POST /teachers` — duplicate email → expect 409
-- [ ] `POST /teachers` — duplicate employee_id → expect 409
-- [ ] `GET /teachers/{id}` — existing → expect 200
-- [ ] `GET /teachers/{id}` — non-existent → expect 404
-- [ ] `GET /teachers/employee/{employee_id}` — e.g., `T001` → expect 200
-- [ ] `GET /teachers/employee/{employee_id}` — non-existent → expect 404
-- [ ] `PUT /teachers/{id}` — valid update → expect 200 *(BUG-05)*
-- [ ] `DELETE /teachers/{id}` — existing → expect 200
-- [ ] `DELETE /teachers/{id}` — non-existent → expect 404
+- [x] `POST /teachers` — valid body → expect 201 + body with ID *(BUG-04)*
+- [x] `POST /teachers` — missing phone → expect 400
+- [x] `POST /teachers` — invalid employee_id format (not T###) → expect 400
+- [x] `POST /teachers` — hire date before min age 25 → expect 400
+- [x] `POST /teachers` — duplicate email → expect 409
+- [x] `POST /teachers` — duplicate employee_id → expect 409
+- [x] `GET /teachers/{id}` — existing → expect 200
+- [x] `GET /teachers/{id}` — non-existent → expect 404
+- [x] `GET /teachers/employee/{employee_id}` — e.g., `T001` → expect 200
+- [x] `GET /teachers/employee/{employee_id}` — non-existent → expect 404
+- [x] `PUT /teachers/{id}` — valid update → expect 200 *(BUG-05)*
+- [x] `DELETE /teachers/{id}` — existing → expect 200
+- [x] `DELETE /teachers/{id}` — non-existent → expect 404
 
 **Listing & Pagination**
-- [ ] `GET /teachers` — no params → expect 200 + full list
-- [ ] `GET /teachers?page=1&page_size=5` → paginated
-- [ ] `GET /teachers/paginated?page=1&page_size=5` → same
-- [ ] `GET /teachers?page=0` → expect 400
+- [x] `GET /teachers` — no params → expect 200 + full list
+- [x] `GET /teachers?page=1&page_size=5` → paginated
+- [x] `GET /teachers/paginated?page=1&page_size=5` → same
+- [x] `GET /teachers?page=0` → expect 400
 
 **Filters**
-- [ ] `GET /teachers?name=Nguyen` → expect matching teachers
-- [ ] `GET /teachers?status=active` → expect active teachers
-- [ ] `GET /teachers?status=on-leave` → expect on-leave teachers
-- [ ] `GET /teachers?status=invalid` → expect 400
-- [ ] `GET /teachers?gender=female` → expect female teachers
-- [ ] `GET /teachers?employee_id=T001` → expect single match
-- [ ] `GET /teachers?subject=Math` → expect teachers teaching Math
-- [ ] `GET /teachers?class=10A` → expect teachers assigned to 10A
-- [ ] `GET /teachers?subject=Math&subject=English` → AND semantics (must teach both)
-- [ ] `GET /teachers?hire_date_from=2020-01-01&hire_date_to=2023-12-31` → date range
-- [ ] `GET /teachers?hire_date_from=2023-01-01&hire_date_to=2020-01-01` → expect 400 (from > to)
-- [ ] `GET /teachers?hire_date_from=invalid` → expect 400
-- [ ] `GET /teachers?name=Nguyen&status=active` → combined filter
+- [x] `GET /teachers?name=Nguyen` → expect matching teachers
+- [x] `GET /teachers?status=active` → expect active teachers
+- [x] `GET /teachers?status=on-leave` → expect on-leave teachers
+- [x] `GET /teachers?status=invalid` → expect 400
+- [x] `GET /teachers?gender=female` → expect female teachers
+- [x] `GET /teachers?employee_id=T001` → expect single match
+- [x] `GET /teachers?subject=Math` → expect teachers teaching Math
+- [x] `GET /teachers?class=10A` → expect teachers assigned to 10A
+- [x] `GET /teachers?subject=Math&subject=English` → AND semantics (must teach both)
+- [x] `GET /teachers?hire_date_from=2020-01-01&hire_date_to=2023-12-31` → date range
+- [x] `GET /teachers?hire_date_from=2023-01-01&hire_date_to=2020-01-01` → expect 400 (from > to)
+- [x] `GET /teachers?hire_date_from=invalid` → expect 400
+- [x] `GET /teachers?name=Nguyen&status=active` → combined filter
 
 **CSV**
 - [ ] `POST /teachers/bulk-upload` — valid CSV → expect 201 + count
@@ -211,18 +211,20 @@ Work through these in order. Fix bugs as you find them. Mark [x] when verified.
 
 ## Tasks To Do Next (In Order)
 
-### Phase 1 — Fix Code Bugs (Do Before Any More Postman Testing)
+### Phase 1 — Fix Code Bugs ✅ COMPLETE (2026-06-09)
 
-1. **Fix BUG-01** — Add `ByYear` predicate to `filterPredicateStudents`
-2. **Fix BUG-02** — Change `&&` to `||` in score range predicate condition
-3. **Fix BUG-03** — Fix `ensureStudentUnique` error sentinel mismatch
-4. **Fix BUG-04 & BUG-05** — Fix response body for POST/PUT (ID and timestamps missing)
-5. **Fix BUG-06** — Move `ErrStudentIDRequired` and `ErrSubjectEmpty` from 404 to 400 case
-6. **Fix BUG-07** — Move `ErrTeacherIDRequired` from 404 to 400 case
-7. **Fix BUG-08** — Add `ErrScoreRange` to the 400 case in student `serviceErrToStatus`
-8. **Fix BUG-09** — Change `ByAddress` from exact match to substring (Contains)
-9. **Fix BUG-10** — Add `strings.ToUpper` to class in `normalizeStudent`
-10. **Fix BUG-11** — Fix wrong error used for duplicate ID in `BulkAddTeachers`
+All bugs fixed and verified (`go build ./...` and `go test ./...` pass).
+
+1. [x] **BUG-01** — `ByYear` predicate added to `filterPredicateStudents`
+2. [x] **BUG-02** — Score range condition uses `||`
+3. [x] **BUG-03** — `ensureStudentUnique` uses `studentRepo.ErrStudentNotFound`
+4. [x] **BUG-04 & BUG-05** — Service mutates caller's struct; ID/timestamps now in POST/PUT response
+5. [x] **BUG-06** — `ErrStudentIDRequired` and `ErrSubjectEmpty` mapped to 400
+6. [x] **BUG-07** — `ErrTeacherIDRequired` mapped to 400
+7. [x] **BUG-08** — `ErrScoreRange` mapped to 400 in student `serviceErrToStatus`
+8. [x] **BUG-09** — `ByAddress` uses substring (`strings.Contains`)
+9. [x] **BUG-10** — `normalizeStudent` uppercases class
+10. [x] **BUG-11** — `BulkAddTeachers` returns `ErrTeacherIDDuplicated` for duplicate ID
 
 ### Phase 2 — Complete Postman Testing
 

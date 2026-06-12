@@ -241,7 +241,7 @@ func validateFilterTeachers(filter *teacherModels.FilterTeachers) error {
 
 	if filter.HireDateFrom != nil && filter.HireDateTo != nil {
 		if filter.HireDateFrom.After(*filter.HireDateTo) {
-			return errors.New("hire date from cannot be after hire date to")
+			return ErrHireDateRange
 		}
 	}
 	return nil

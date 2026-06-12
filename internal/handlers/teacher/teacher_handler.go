@@ -63,6 +63,7 @@ func serviceErrToStatus(err error) int {
 		errors.Is(err, teacher.ErrClassFormat),
 		errors.Is(err, teacher.ErrSubjectRequired),
 		errors.Is(err, teacher.ErrTeacherHireDate),
+		errors.Is(err, teacher.ErrHireDateRange),
 		errors.Is(err, teacher.ErrClassRequired),
 		errors.Is(err, teacherRepo.ErrInvalidPage),
 		errors.Is(err, teacherRepo.ErrInvalidPageSize),

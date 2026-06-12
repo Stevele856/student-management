@@ -37,6 +37,7 @@ var (
 	ErrClassFormat              = errors.New("invalid teacher class assigned")
 	ErrSubjectRequired          = errors.New("subject is require for teacher")
 	ErrTeacherHireDate          = errors.New("invalid teacher hire date")
+	ErrHireDateRange            = errors.New("hire date from cannot be after hire date to")
 	ErrClassRequired            = errors.New("teacher's class required")
 	ErrSubjectDuplicated        = errors.New("subject already existed")
 	ErrClassDuplicate           = errors.New("class being dublicated for this teacher")
